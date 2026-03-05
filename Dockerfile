@@ -36,7 +36,15 @@ COPY --chown=www-data:www-data . /var/www
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Install Node dependencies and build assets
-RUN npm install && npm run build && rm -rf node_modules
+RUN npm ci && npm run build && rm -rf node_modules
+
+# Laravel optimizations
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+
+# Create storage link
+RUN php artisan storage:link
 
 # Copy nginx configuration
 COPY docker/nginx.conf /etc/nginx/sites-available/default
