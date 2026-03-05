@@ -1,3 +1,58 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Alpine.js Cloak - Prevent Flash of Unstyled Content */
+[x-cloak] { display: none !important; }
+
+/* Custom Scrollbars */
+.scrollbar-thin {
+    scrollbar-width: thin;
+}
+.scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+.scrollbar-hide::-webkit-scrollbar { 
+    display: none; 
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Rich Text Content Styling */
+.prose-content p { margin: 0.5rem 0; }
+.prose-content strong { font-weight: 600; }
+.prose-content em { font-style: italic; }
+.prose-content u { text-decoration: underline; }
+.prose-content ul { list-style-type: disc; margin-left: 1.5rem; margin: 0.5rem 0; }
+.prose-content ol { list-style-type: decimal; margin-left: 1.5rem; margin: 0.5rem 0; }
+.prose-content li { margin: 0.25rem 0; }
+.prose-content a { color: #2563eb; text-decoration: underline; }
+.prose-content a:hover { color: #1d4ed8; }
+.prose-content table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
+.prose-content th, .prose-content td { border: 1px solid #e5e7eb; padding: 0.5rem; text-align: left; }
+.prose-content th { background-color: #f3f4f6; font-weight: 600; }
+.prose-content code { background-color: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; }
+.prose-content pre { background-color: #1f2937; color: #f3f4f6; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
+.prose-content pre code { background-color: transparent; padding: 0; color: inherit; }
+.prose-content blockquote { border-left: 4px solid #d1d5db; padding-left: 1rem; margin: 0.5rem 0; color: #6b7280; }
+.prose-content h1, .prose-content h2, .prose-content h3, .prose-content h4, .prose-content h5, .prose-content h6 { font-weight: 600; margin: 0.75rem 0 0.5rem 0; }
+.prose-content h1 { font-size: 1.875rem; }
+.prose-content h2 { font-size: 1.5rem; }
+.prose-content h3 { font-size: 1.25rem; }
+.prose-content h4 { font-size: 1.125rem; }
+.prose-content h5 { font-size: 1rem; }
+.prose-content h6 { font-size: 0.875rem; }

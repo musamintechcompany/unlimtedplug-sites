@@ -22,11 +22,31 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's theme.
+     */
+    public function updateTheme(Request $request)
+    {
+        $request->validate(['theme' => 'required|in:light,dark']);
+        
+        $user = Auth::user();
+        $user->update(['theme' => $request->theme]);
+        
+        return response()->json(['success' => true, 'theme' => $request->theme]);
+    }
+
+    /**
      * Update the user's profile information.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $data = $request->validated();
+        
+        if ($request->hasFile('profile_photo_path')) {
+            $path = $request->file('profile_photo_path')->store('profile-photos', 'public');
+            $data['profile_photo_path'] = $path;
+        }
+        
+        $request->user()->fill($data);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;

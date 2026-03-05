@@ -7,6 +7,9 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -14,17 +17,18 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-[#1b1b18] dark:text-[#EDEDEC] antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center px-4 py-12 sm:px-6 bg-[#FDFDFC] dark:bg-[#0a0a0a]">
-            <div class="mb-8">
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-indigo-600" />
-                </a>
-            </div>
-
-            <div class="w-full sm:max-w-md px-8 py-8 bg-white dark:bg-[#161615] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden sm:rounded-2xl">
+    <body class="font-sans text-[#1b1b18] antialiased relative overflow-x-hidden bg-[#FDFDFC]">
+        <div class="min-h-screen relative">
+            @include('layouts.public-nav')
+            
+            <!-- Page Content -->
+            <main class="pt-16">
                 {{ $slot }}
-            </div>
+            </main>
+            
+            @include('footer')
         </div>
+
+
     </body>
 </html>
