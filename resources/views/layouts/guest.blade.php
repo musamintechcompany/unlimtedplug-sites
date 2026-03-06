@@ -19,14 +19,10 @@
     </head>
     <body class="font-sans text-[#1b1b18] antialiased relative overflow-x-hidden bg-[#FDFDFC]">
         <div class="min-h-screen relative">
-            @include('layouts.public-nav')
-            
             <!-- Page Content -->
-            <main class="pt-16">
+            <main>
                 {{ $slot }}
             </main>
-            
-            @include('footer')
         </div>
 
 

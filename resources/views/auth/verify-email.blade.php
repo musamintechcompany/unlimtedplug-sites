@@ -1,29 +1,35 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-[#706f6c] dark:text-[#A1A09A]">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
-
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
+    <x-auth-card>
+        <div class="mb-8 text-center">
+            <h2 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Verify your email</h2>
+            <p class="mt-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">We've sent a 6-digit code to your email address</p>
         </div>
-    @endif
 
-    <div class="mt-4 space-y-3">
-        <form method="POST" action="{{ route('verification.send') }}">
+        @if (session('success'))
+            <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm rounded-lg">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('verify-email.store') }}" class="space-y-6">
             @csrf
 
+            <div>
+                <x-input-label for="code" :value="__('Verification Code')" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]" />
+                <x-text-input id="code" class="block mt-2 w-full text-center text-2xl tracking-widest" type="text" name="code" maxlength="6" placeholder="000000" :value="old('code')" required autofocus />
+                <x-input-error :messages="$errors->get('code')" class="mt-2" />
+            </div>
+
             <x-primary-button class="w-full justify-center py-3 text-sm font-semibold">
-                {{ __('Resend Verification Email') }}
+                {{ __('Verify Email') }}
             </x-primary-button>
         </form>
 
-        <form method="POST" action="{{ route('logout') }}" class="text-center">
-            @csrf
-
-            <button type="submit" class="w-full py-3 text-sm text-[#706f6c] dark:text-[#A1A09A] hover:text-indigo-600 dark:hover:text-indigo-400 font-medium border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-md">
-                {{ __('Log Out') }}
-            </button>
-        </form>
-    </div>
+        <div class="mt-6 text-center space-y-3">
+            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                Didn't receive the code?
+                <a href="{{ route('resend-verification-code') }}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">Resend</a>
+            </p>
+        </div>
+    </x-auth-card>
 </x-guest-layout>

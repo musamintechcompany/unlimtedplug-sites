@@ -495,6 +495,12 @@ window.setCurrency = function(currency) {
  * Verify payment after Flutterwave callback
  */
 window.verifyPayment = function(transactionId, credits) {
+    const config = window.CREDIT_CONFIG || {};
+    const pricePerTen = config.pricePerTen || 1;
+    const currency = config.currency || 'USD';
+    const price = (credits / 10) * pricePerTen;
+    
+    console.log('Verifying payment:', {transactionId, credits, currency, price});
     fetch('/credits/verify-payment', {
         method: 'POST',
         headers: {
@@ -503,11 +509,17 @@ window.verifyPayment = function(transactionId, credits) {
         },
         body: JSON.stringify({
             transaction_id: transactionId,
-            credits: credits
+            credits: credits,
+            currency: currency,
+            price: price
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Verification response:', data);
         if (data.success) {
             window.location.href = '/dashboard?payment=success&credits=' + credits;
         } else {
@@ -515,6 +527,7 @@ window.verifyPayment = function(transactionId, credits) {
         }
     })
     .catch(error => {
+        console.error('Verification error:', error);
         window.location.href = '/dashboard?payment=error';
     });
 };
@@ -526,138 +539,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ============================================
-// CREDIT PURCHASE MODAL FUNCTIONS
-// ============================================
-
-/**
- * Opens the credit purchase modal
- */
-window.openCreditPurchaseModal = function() {
-    document.getElementById('credit-purchase-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-};
-
-/**
- * Closes the credit purchase modal
- */
-window.closeCreditModal = function() {
-    document.getElementById('credit-purchase-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-};
-
-/**
- * Initiates Flutterwave payment for selected credit package
- * @param {number} credits - Number of credits to purchase
- * @param {number} amount - Amount in USD
- */
-window.selectCreditPackage = function(credits, amount) {
-    makePayment(credits, amount);
-};
-
-/**
- * Opens Flutterwave checkout modal
- * @param {number} credits - Number of credits
- * @param {number} amount - Payment amount
- */
-function makePayment(credits, amount) {
-    // Get user data from meta tags or global variables
-    const userEmail = document.querySelector('meta[name="user-email"]')?.content || '';
-    const userName = document.querySelector('meta[name="user-name"]')?.content || '';
-    const userId = document.querySelector('meta[name="user-id"]')?.content || '';
-    const publicKey = document.querySelector('meta[name="flutterwave-public-key"]')?.content || '';
-    const appName = document.querySelector('meta[name="app-name"]')?.content || 'Unlimited Plug Sites';
-    
-    FlutterwaveCheckout({
-        public_key: publicKey,
-        tx_ref: "CREDIT_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-        amount: amount,
-        currency: "USD",
-        payment_options: "card,banktransfer,ussd",
-        customer: {
-            email: userEmail,
-            name: userName,
-        },
-        customizations: {
-            title: appName,
-            description: credits + " Credits Purchase",
-            logo: window.location.origin + "/favicon.svg",
-        },
-        meta: {
-            project: "unlimitedplug-sites",
-            user_id: userId,
-            credits: credits,
-        },
-        callback: function(data) {
-            if (data.status === "successful") {
-                verifyPayment(data.transaction_id, credits);
-            } else {
-                alert("Payment failed. Please try again.");
-            }
-        },
-        onclose: function() {
-            console.log("Payment modal closed");
-        }
-    });
-}
-
-/**
- * Verifies payment with backend and adds credits to wallet
- * @param {string} transactionId - Flutterwave transaction ID
- * @param {number} credits - Number of credits purchased
- */
-function verifyPayment(transactionId, credits) {
-    fetch('/credits/verify-payment', {
+window.markAsRead = function(notificationId) {
+    fetch(`/notifications/${notificationId}/read`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-            transaction_id: transactionId,
-            credits: credits
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.closeCreditModal();
-            alert('Payment successful! ' + credits + ' credits added to your account.');
-            window.location.reload();
-        } else {
-            alert('Payment verification failed. Please contact support.');
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json'
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred. Please contact support.');
-    });
+    }).then(() => location.reload());
+};
+
+function openNotificationsSidebar() {
+    const sidebar = document.getElementById('notificationsSidebar');
+    const overlay = document.getElementById('notificationsSidebarOverlay');
+    sidebar.style.display = 'flex';
+    overlay.classList.remove('hidden');
+    setTimeout(() => {
+        sidebar.classList.remove('translate-x-full');
+        overlay.classList.add('opacity-100');
+    }, 10);
 }
 
-// ============================================
-// THEME TOGGLE HANDLER
-// ============================================
-
-/**
- * Handles theme toggle between light and dark mode
- */
-document.addEventListener('DOMContentLoaded', function() {
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function() {
-            const isDark = document.documentElement.classList.contains('dark');
-            const theme = isDark ? 'light' : 'dark';
-            document.documentElement.classList.toggle('dark');
-            
-            fetch('/theme/update', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ theme: theme })
-            });
-        });
-    }
-});
+function closeNotificationsSidebar() {
+    const sidebar = document.getElementById('notificationsSidebar');
+    const overlay = document.getElementById('notificationsSidebarOverlay');
+    sidebar.classList.add('translate-x-full');
+    overlay.classList.add('hidden');
+    setTimeout(() => {
+        sidebar.style.display = 'none';
+    }, 300);
+}

@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->uuidMorphs('transactable');
             $table->decimal('amount', 20, 2);
+            $table->string('currency')->nullable();
+            $table->decimal('price', 20, 2)->nullable();
             $table->string('type');
             $table->text('description')->nullable();
             $table->timestamps();
             
-            $table->index('user_id');
             $table->index('type');
             $table->index('created_at');
         });

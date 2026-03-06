@@ -8,6 +8,7 @@ use App\Http\Controllers\ProjectAdminController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -108,6 +109,11 @@ Route::middleware('auth')->group(function () {
     // API Keys
     Route::resource('api-keys', ApiKeyController::class);
     Route::patch('api-keys/{apiKey}/toggle', [ApiKeyController::class, 'toggle'])->name('api-keys.toggle');
+    
+    // Notifications
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 });
 
 // Dynamic Favicon

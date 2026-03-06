@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('email_verification_code', 6)->nullable();
+            $table->timestamp('verification_code_expires_at')->nullable();
             $table->string('password');
             $table->string('theme')->default('light');
             $table->string('profile_photo_path')->nullable();

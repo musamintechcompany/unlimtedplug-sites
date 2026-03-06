@@ -1,4 +1,5 @@
-<!-- How It Works -->
+<x-guest1-layout>
+    <!-- How It Works -->
 <section id="how-it-works" class="py-20 px-6">
     <div class="max-w-7xl mx-auto">
         <h2 class="text-4xl font-bold text-center mb-4">How It Works</h2>
@@ -36,3 +37,4 @@
         </div>
     </div>
 </section>
+</x-guest1-layout>

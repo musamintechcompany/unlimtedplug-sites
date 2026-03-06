@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Transaction extends Model
@@ -11,19 +11,22 @@ class Transaction extends Model
     use HasUuids;
 
     protected $fillable = [
-        'user_id',
+        'transactable_type',
+        'transactable_id',
         'amount',
         'type',
         'description',
-        'status',
+        'currency',
+        'price',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'price' => 'decimal:2',
     ];
 
-    public function user(): BelongsTo
+    public function transactable(): MorphTo
     {
-        return $this->belongsTo(User::class);
+        return $this->morphTo();
     }
 }

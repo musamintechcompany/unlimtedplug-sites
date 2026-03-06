@@ -10,8 +10,7 @@ return new class extends Migration
     {
         Schema::create('api_keys', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->uuidMorphs('keyable');
             $table->string('name');
             $table->string('key')->unique();
             $table->integer('requests_count')->default(0);
@@ -20,7 +19,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             
-            $table->index('user_id');
             $table->index('key');
             $table->index('status');
             $table->index('last_used_at');

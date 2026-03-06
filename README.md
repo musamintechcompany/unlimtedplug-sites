@@ -19,6 +19,7 @@ Built with Laravel 12 | PHP 8.2+ | MySQL | Redis | Tailwind CSS
 - Light/dark theme toggle with persistence
 - API key management for developers
 - Real-time notifications
+- Email verification on registration
 
 ### Admin Features (Project Owners)
 - Temporary admin panel at `/admin-projects/login` (password: `Osaretine@70`)
@@ -97,7 +98,15 @@ SESSION_DRIVER=database
 QUEUE_CONNECTION=database
 CACHE_STORE=database
 
-MAIL_MAILER=log
+# Email Configuration (Gmail SMTP)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=your-email@gmail.com
+MAIL_FROM_NAME="${APP_NAME}"
 
 # Flutterwave Configuration (Auto-switches based on APP_ENV)
 FLUTTERWAVE_TEST_PUBLIC_KEY=<your_test_public_key>
@@ -180,13 +189,14 @@ unlimitedplug-sites/
 
 ## 📊 Key Systems
 
-### User Profile System
-- Profile photo upload with live preview
-- Profile photo display in navigation (mobile & sidebar)
-- Theme preference persistence (light/dark mode)
-- Email verification
-- Password management
-- Account deletion
+### Email Verification System
+- 6-digit verification code sent on registration
+- 15-minute code expiration
+- Resend code functionality
+- Email verification required before dashboard access
+- Gmail SMTP integration for sending verification emails
+- Verification code stored in database with expiry timestamp
+- User model includes `email_verification_code` and `verification_code_expires_at` fields
 
 ### Rental System
 - Time-based rental pricing (24h, 7d, 30d, 365d)
@@ -230,6 +240,22 @@ unlimitedplug-sites/
 - Profile image display in all navigation areas
 - Profile link in mobile dropdown menu
 - Active route highlighting
+- Notification icon with unread badge in navigation
+- Notification sidebar slides from right with smooth animations
+- Page scrolling disabled when sidebars are open
+
+### Notification System
+- Polymorphic notification model using `uuidMorphs` to work with any model type
+- NotificationService with helper methods: paymentSuccess(), paymentFailed(), rentalExpired()
+- Notification sidebar with card-based UI design
+- Unread notifications have blue left border and unread indicator
+- Relative timestamps using diffForHumans()
+- Mark individual notifications as read or mark all as read
+- Page scrolling disabled when notification sidebar is open
+- Notification sidebar only closes via X button
+- Empty state with icon when no notifications
+- Payment notifications display actual currency and price paid
+- Real-time unread badge on notification icon in navigation
 
 ---
 
@@ -277,9 +303,14 @@ See `.amazonq/rules/` for detailed safety guidelines.
 - **resources/views/modals/payment-notifications.blade.php** - Reusable payment success/failure alerts
 
 ### Database Tables
-- **users** - User accounts with UUID primary keys and profile photos (softDeletes)
+- **users** - User accounts with UUID primary keys, profile photos, email verification fields (softDeletes)
+  - `email_verification_code` - 6-digit verification code
+  - `verification_code_expires_at` - Code expiration timestamp
+  - `email_verified_at` - Email verification completion timestamp
 - **wallets** - User credit wallets with UUID
-- **transactions** - Credit transaction history with UUID
+- **transactions** - Credit transaction history with UUID, currency, and price tracking
+  - `currency` - Currency code used for payment (e.g., "NGN", "USD")
+  - `price` - Actual amount paid in that currency
 - **rentals** - Rental records with UUID, DATETIME expiry, and JSON renewal_history
 - **rentable_projects** - Rentable project catalog with UUID
 - **api_keys** - User API keys for developers with UUID
@@ -311,6 +342,36 @@ php artisan schedule:run
 ---
 
 ## 🚀 Recent Updates
+
+### Notification Sidebar & Transaction Tracking (v2.5)
+- Designed notification cards with modern card-based UI
+- Each card displays: badge, timestamp, title, message, unread indicator, mark-as-read button
+- Notification sidebar slides from right side with smooth animations
+- Page scrolling disabled when either hamburger or notification sidebar is open
+- Notification sidebar only closes via X button (overlay click also closes for UX)
+- Empty state with icon when no notifications exist
+- Relative timestamps (e.g., "2 minutes ago")
+- Unread notifications have blue left border and unread badge
+- Added `currency` and `price` columns to transactions table
+- PaymentController now captures and stores actual currency and price paid
+- NotificationService displays correct currency symbol and amount in payment notifications
+- Example: "You have successfully purchased 100 credits for ₦X,XXX" (instead of hardcoded "$100")
+- Transaction model updated with new fillable fields and casts
+- Payment verification sends currency and price to backend
+
+### Email Verification System (v2.4)
+- Implemented 6-digit email verification code on registration
+- 15-minute code expiration with automatic cleanup
+- Resend verification code functionality
+- Gmail SMTP email integration
+- Verification code stored in users table with expiry timestamp
+- User cannot access dashboard until email is verified
+- Styled verify-email page matching register/login design
+- Uses x-auth-card component for consistent UI
+- Added VerifyEmailController with show, store, and resend methods
+- Created VerificationCodeMail mailable class
+- Email template with formatted 6-digit code display
+- Routes: `/verify-email` (GET/POST), `/resend-verification-code` (GET)
 
 ### Currency System Refactor (v2.3)
 - Changed from `price_per_100` to `price_per_10` for simpler calculations

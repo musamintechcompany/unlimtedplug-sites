@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-guest1-layout>
     <!-- Browse Content -->
     <section class="py-12 px-6">
         <div class="max-w-7xl mx-auto">
@@ -133,4 +133,4 @@
             </div>
         </div>
     </section>
-</x-guest-layout>
+</x-guest1-layout>

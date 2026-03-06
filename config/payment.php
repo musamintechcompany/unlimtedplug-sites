@@ -3,30 +3,38 @@
 return [
     'default_currency' => 'USD',
     
+    'flutterwave' => [
+        'public_key' => env('APP_ENV') === 'production' 
+            ? env('FLUTTERWAVE_LIVE_PUBLIC_KEY') 
+            : env('FLUTTERWAVE_TEST_PUBLIC_KEY'),
+        'secret_key' => env('APP_ENV') === 'production' 
+            ? env('FLUTTERWAVE_LIVE_SECRET_KEY') 
+            : env('FLUTTERWAVE_TEST_SECRET_KEY'),
+        'encryption_key' => env('APP_ENV') === 'production' 
+            ? env('FLUTTERWAVE_LIVE_ENCRYPTION_KEY') 
+            : env('FLUTTERWAVE_TEST_ENCRYPTION_KEY'),
+    ],
+    
     'currencies' => [
-        'USD' => ['name' => 'US Dollar', 'symbol' => '$', 'price_per_10' => 1],
-        'GBP' => ['name' => 'British Pound', 'symbol' => '£', 'price_per_10' => 0.8],
-        'EUR' => ['name' => 'Euro', 'symbol' => '€', 'price_per_10' => 0.9],
+        'USD' => ['name' => 'US Dollar', 'symbol' => '$', 'price_per_10' => 1.00],
+        'GBP' => ['name' => 'British Pound', 'symbol' => '£', 'price_per_10' => 0.80],
+        'EUR' => ['name' => 'Euro', 'symbol' => '€', 'price_per_10' => 0.90],
         'NGN' => ['name' => 'Nigerian Naira', 'symbol' => '₦', 'price_per_10' => 1384],
-        'GHS' => ['name' => 'Ghanaian Cedi', 'symbol' => 'GH₵', 'price_per_10' => 10.8],
-        'KES' => ['name' => 'Kenyan Shilling', 'symbol' => 'KSh', 'price_per_10' => 129.2],
-        'ZAR' => ['name' => 'South African Rand', 'symbol' => 'R', 'price_per_10' => 16.6],
-        'CAD' => ['name' => 'Canadian Dollar', 'symbol' => 'CA$', 'price_per_10' => 1.4],
-        'AUD' => ['name' => 'Australian Dollar', 'symbol' => 'A$', 'price_per_10' => 1.4],
+        'GHS' => ['name' => 'Ghanaian Cedi', 'symbol' => 'GH₵', 'price_per_10' => 10.80],
+        'KES' => ['name' => 'Kenyan Shilling', 'symbol' => 'KSh', 'price_per_10' => 129.20],
+        'ZAR' => ['name' => 'South African Rand', 'symbol' => 'R', 'price_per_10' => 16.60],
+        'CAD' => ['name' => 'Canadian Dollar', 'symbol' => 'C$', 'price_per_10' => 1.40],
+        'AUD' => ['name' => 'Australian Dollar', 'symbol' => 'A$', 'price_per_10' => 1.40],
     ],
     
-    // Country to Currency mapping for auto-detection
-    'country_currency_map' => [
-        'US' => 'USD', 'CA' => 'CAD', 'GB' => 'GBP', 'AU' => 'AUD',
-        'NG' => 'NGN', 'GH' => 'GHS', 'KE' => 'KES', 'ZA' => 'ZAR',
-        // European countries using EUR
-        'DE' => 'EUR', 'FR' => 'EUR', 'IT' => 'EUR', 'ES' => 'EUR', 'NL' => 'EUR',
-        'BE' => 'EUR', 'AT' => 'EUR', 'PT' => 'EUR', 'IE' => 'EUR', 'GR' => 'EUR',
-    ],
-    
-    // Credit packages with multipliers
     'packages' => [
         100 => ['bonus' => 0, 'savings' => 0],
         500 => ['bonus' => 50, 'savings' => 10],
+    ],
+    
+    'country_currency_map' => [
+        'US' => 'USD', 'CA' => 'CAD', 'GB' => 'GBP', 'AU' => 'AUD',
+        'NG' => 'NGN', 'GH' => 'GHS', 'KE' => 'KES', 'ZA' => 'ZAR',
+        'DE' => 'EUR', 'FR' => 'EUR', 'IT' => 'EUR', 'ES' => 'EUR',
     ],
 ];

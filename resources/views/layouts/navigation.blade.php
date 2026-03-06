@@ -1,11 +1,18 @@
-<nav x-data="{ open: false, profileOpen: false }" class="bg-white dark:bg-[#161615] border-b border-gray-100 dark:border-[#3E3E3A] sticky top-0 z-30">
+<nav x-data="{ open: false, profileOpen: false, notificationsOpen: false }" @open.window="open = true" @close.window="open = false" class="bg-white dark:bg-[#161615] border-b border-gray-100 dark:border-[#3E3E3A] sticky top-0 z-30">
+    <script>
+        function updateBodyScroll() {
+            const nav = document.querySelector('nav');
+            const isOpen = nav.__x.$data.open || nav.__x.$data.notificationsOpen;
+            document.body.style.overflow = isOpen ? 'hidden' : 'auto';
+        }
+    </script>
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Left: Hamburger + Logo -->
             <div class="flex items-center">
                 <!-- Hamburger (Mobile) -->
-                <button @click="open = true" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a19] focus:outline-none transition duration-150 ease-in-out sm:hidden">
+                <button @click="open = true; updateBodyScroll()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a19] focus:outline-none transition duration-150 ease-in-out sm:hidden">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -41,8 +48,20 @@
                 </div>
             </div>
 
-            <!-- Right: Theme Toggle + Currency (on credits page) + User Dropdown (Desktop) / Theme Toggle + Avatar (Mobile) -->
+            <!-- Right: Notifications + Currency (on credits page) + User Dropdown (Desktop) / Avatar (Mobile) -->
             <div class="flex items-center gap-3 sm:gap-0 sm:ms-6">
+                <!-- Notifications Button (Desktop & Mobile) -->
+                <button @click="notificationsOpen = true; updateBodyScroll()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition sm:mr-6">
+                    <svg class="w-5 h-5 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    @php
+                        $unreadCount = auth()->user()->notifications()->whereNull('read_at')->count();
+                    @endphp
+                    @if($unreadCount > 0)
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">{{ $unreadCount }}</span>
+                    @endif
+                </button>
                 <!-- Currency Selector (Only on Credits Page) -->
                 @if(request()->routeIs('credits.index'))
                 <div x-data="{ open: false }" class="relative hidden sm:block mr-3">
@@ -61,17 +80,6 @@
                     </div>
                 </div>
                 @endif
-                
-                <button id="theme-toggle" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition sm:mr-4">
-                    <!-- Sun Icon (Light Mode) -->
-                    <svg class="w-5 h-5 text-gray-800 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                    </svg>
-                    <!-- Moon Icon (Dark Mode) -->
-                    <svg class="w-5 h-5 text-gray-200 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
                 
                 <!-- Desktop User Dropdown -->
                 <div class="hidden sm:block">
@@ -133,7 +141,7 @@
 
     <!-- Overlay -->
     <div x-show="open" 
-         @click="open = false" 
+         @click="open = false; updateBodyScroll()" 
          x-transition:enter="transition-opacity ease-linear duration-300" 
          x-transition:enter-start="opacity-0" 
          x-transition:enter-end="opacity-100" 
@@ -163,7 +171,7 @@
                 <x-application-logo class="block h-8 w-auto fill-current text-gray-800 dark:text-indigo-600" />
                 <span class="font-bold text-gray-800 dark:text-[#EDEDEC]">{{ config('app.name') }}</span>
             </div>
-            <button @click="open = false" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300">
+            <button @click="open = false; updateBodyScroll()" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -246,6 +254,107 @@
             </a>
         </div>
     </div>
-</nav>
 
-@include('modals.credit-purchase-modal')
+    <!-- Notifications Sidebar (Right Side) - Using Alpine.js -->
+    <div x-show="notificationsOpen" 
+         @click="notificationsOpen = false; updateBodyScroll()" 
+         x-transition:enter="transition-opacity ease-linear duration-300" 
+         x-transition:enter-start="opacity-0" 
+         x-transition:enter-end="opacity-100" 
+         x-transition:leave="transition-opacity ease-linear duration-300" 
+         x-transition:leave-start="opacity-100" 
+         x-transition:leave-end="opacity-0" 
+         class="fixed inset-0 bg-black bg-opacity-50 z-40" 
+         style="display: none;"
+         x-cloak>
+    </div>
+
+    <div x-show="notificationsOpen" 
+         x-transition:enter="transform transition ease-in-out duration-300" 
+         x-transition:enter-start="translate-x-full" 
+         x-transition:enter-end="translate-x-0" 
+         x-transition:leave="transform transition ease-in-out duration-300" 
+         x-transition:leave-start="translate-x-0" 
+         x-transition:leave-end="translate-x-full" 
+         class="fixed top-0 right-0 h-full w-full sm:w-96 bg-white dark:bg-[#161615] border-l border-gray-200 dark:border-[#3E3E3A] shadow-2xl z-50 flex flex-col" 
+         style="display: none;"
+         x-cloak>
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#3E3E3A]">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
+            <div class="flex items-center gap-2">
+                <button @click="markAllAsRead()" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
+                    Mark all read
+                </button>
+                <button @click="notificationsOpen = false; updateBodyScroll()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Notification Items -->
+        <div class="flex-1 overflow-y-auto p-4">
+            @php
+                $notifications = auth()->user()->notifications()->latest()->get();
+            @endphp
+            @forelse($notifications as $notification)
+                <div class="bg-white dark:bg-[#1a1a19] border border-gray-200 dark:border-[#3E3E3A] rounded-lg p-4 mb-3 hover:shadow-md dark:hover:shadow-lg transition {{ $notification->read_at ? 'opacity-70' : 'border-l-4 border-l-blue-600' }}">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                            {{ $notification->type ?? 'Update' }}
+                        </span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $notification->created_at->diffForHumans() }}</span>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white mb-1 text-sm">{{ $notification->title }}</h4>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-3 leading-relaxed">{{ $notification->message }}</p>
+                    <div class="flex items-center justify-between">
+                        @if(!$notification->read_at)
+                            <span class="inline-flex items-center gap-1">
+                                <span class="w-2 h-2 bg-blue-600 rounded-full"></span>
+                                <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">Unread</span>
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-500 dark:text-gray-500">Read</span>
+                        @endif
+                        @if(!$notification->read_at)
+                            <button @click="markAsRead('{{ $notification->id }}')" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs font-medium hover:underline">
+                                Mark as read
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-12">
+                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">No notifications yet</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    <script>
+        function markAllAsRead() {
+            fetch('/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            }).then(() => location.reload());
+        }
+
+        function markAsRead(id) {
+            fetch(`/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json'
+                }
+            }).then(() => location.reload());
+        }
+    </script>
+</nav>
