@@ -26,6 +26,9 @@
         </form>
 
         <div class="mt-6 text-center space-y-3">
+            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                If you don't see the email, please check your spam or promotions folder.
+            </p>
             <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 Didn't receive the code?
                 <a href="{{ route('resend-verification-code') }}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">Resend</a>
