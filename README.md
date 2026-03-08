@@ -38,6 +38,7 @@ Built with Laravel 12 | PHP 8.2+ | MySQL | Redis | Tailwind CSS
 - Renewal functionality
 - Rental history tracking
 - Integration with Shipping API for tenant management
+- Secure platform-to-project API authentication
 
 ### Credit System
 - Purchase packages: 100, 500, 1000, 5000 credits + Custom amounts
@@ -116,6 +117,10 @@ FLUTTERWAVE_TEST_ENCRYPTION_KEY=<your_test_encryption_key>
 FLUTTERWAVE_LIVE_PUBLIC_KEY=<your_live_public_key>
 FLUTTERWAVE_LIVE_SECRET_KEY=<your_live_secret_key>
 FLUTTERWAVE_LIVE_ENCRYPTION_KEY=<your_live_encryption_key>
+
+# UPS Project Connector API Credentials
+UPS_PROJECT_CONNECTOR_API_KEY=sk_live_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
+UPS_PROJECT_CONNECTOR_API_SECRET=sk_secret_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
 ```
 
 ### 5. Database Setup
@@ -167,6 +172,38 @@ unlimitedplug-sites/
 │   └── console.php           # Scheduled commands
 └── public/                   # Public assets
 ```
+
+---
+
+## 🔐 API Authentication
+
+### Platform-to-Project Communication
+
+The platform uses secure authentication when communicating with rental projects:
+
+**Request Headers:**
+```
+Authorization: Bearer {UPS_PROJECT_CONNECTOR_API_KEY}
+X-Platform-Secret: {UPS_PROJECT_CONNECTOR_API_SECRET}
+X-User-ID: {authenticated_user_id}
+```
+
+**Endpoints:**
+- `POST /api/tenant/create` - Create tenant credentials
+- `POST /api/tenant/hold/{adminId}` - Suspend tenant
+- `POST /api/tenant/activate/{adminId}` - Reactivate tenant
+- `GET /api/tenant/status/{adminId}` - Check tenant status
+
+**Project Setup:**
+1. Add credentials to project `.env`:
+   ```env
+   UPS_PROJECT_CONNECTOR_API_KEY=sk_live_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
+   UPS_PROJECT_CONNECTOR_API_SECRET=sk_secret_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
+   ```
+
+2. Create middleware to validate requests (ValidateUpsConnector)
+
+3. Apply middleware to API routes
 
 ---
 
@@ -225,7 +262,6 @@ unlimitedplug-sites/
 - Credit balance display on dashboard
 - Payment notifications in separate reusable component
 - Automatic redirect to dashboard after payment
-- Future: Admin panel for managing exchange rates and packages
 
 ### Dashboard
 - Welcome section with personalized greeting
@@ -312,7 +348,7 @@ See `.amazonq/rules/` for detailed safety guidelines.
   - `currency` - Currency code used for payment (e.g., "NGN", "USD")
   - `price` - Actual amount paid in that currency
 - **rentals** - Rental records with UUID, DATETIME expiry, and JSON renewal_history
-- **rentable_projects** - Rentable project catalog with UUID
+- **rentable_projects** - Rentable project catalog with UUID, api_key, api_secret
 - **api_keys** - User API keys for developers with UUID
 - **password_reset_tokens** - Password reset tokens
 - **sessions** - User sessions
@@ -342,6 +378,24 @@ php artisan schedule:run
 ---
 
 ## 🚀 Recent Updates
+
+### Platform-to-Project API Authentication (v2.7)
+- Implemented secure authentication between Unlimited Plug Sites and rental projects
+- Added `api_key` and `api_secret` columns to `rentable_projects` table with indexes
+- Created `ValidateUpsConnector` middleware for request validation
+- All tenant API endpoints now require authentication headers:
+  - `Authorization: Bearer {api_key}`
+  - `X-Platform-Secret: {api_secret}`
+  - `X-User-ID: {user_id}`
+- Updated RentalService to send authenticated requests to projects
+- Projects validate credentials before creating/managing tenants
+- Prevents unauthorized access to tenant management endpoints
+- Configuration: `UPS_PROJECT_CONNECTOR_API_KEY` and `UPS_PROJECT_CONNECTOR_API_SECRET` in `.env`
+
+### Bug Fixes (v2.6)
+- Fixed admin_url not being saved to database - added to Rental model fillable array
+- Fixed Total Rentals card on dashboard showing hardcoded 0 - now counts live from database
+- Admin credentials now properly persist after refresh
 
 ### Notification Sidebar & Transaction Tracking (v2.5)
 - Designed notification cards with modern card-based UI

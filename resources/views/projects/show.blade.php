@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-guest1-layout>
     
     <div class="min-h-screen bg-gray-50 py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -192,4 +192,4 @@
             document.getElementById('rental-duration-modal').classList.add('hidden');
         }
     </script>
-</x-guest-layout>
+</x-guest1-layout>

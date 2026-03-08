@@ -16,7 +16,71 @@ The tenant API allows the Sites Platform to:
 - Spatie Laravel Permission package
 - Database with admins table
 
-## Step 1: Create Admin Model
+## Step 1: Environment Configuration
+
+Add the UPS Project Connector credentials to your `.env`:
+
+```env
+# UPS Project Connector API Credentials
+UPS_PROJECT_CONNECTOR_API_KEY=sk_live_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
+UPS_PROJECT_CONNECTOR_API_SECRET=sk_secret_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
+```
+
+## Step 2: Create Authentication Middleware
+
+```php
+// app/Http/Middleware/ValidateUpsConnector.php
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class ValidateUpsConnector
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $apiKey = $request->header('Authorization');
+        $apiSecret = $request->header('X-Platform-Secret');
+        $userId = $request->header('X-User-ID');
+
+        $expectedKey = 'Bearer ' . env('UPS_PROJECT_CONNECTOR_API_KEY');
+        $expectedSecret = env('UPS_PROJECT_CONNECTOR_API_SECRET');
+
+        if ($apiKey !== $expectedKey || $apiSecret !== $expectedSecret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized: Invalid API credentials'
+            ], 401);
+        }
+
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized: Missing user ID'
+            ], 401);
+        }
+
+        return $next($request);
+    }
+}
+```
+
+## Step 3: Register Middleware
+
+In `bootstrap/app.php`, add the middleware alias:
+
+```php
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->alias([
+        'validate.ups.connector' => \App\Http\Middleware\ValidateUpsConnector::class,
+    ]);
+})
+```
+
+## Step 4: Create Admin Model
 
 ```php
 // app/Models/Admin.php
@@ -49,7 +113,7 @@ class Admin extends Model
 }
 ```
 
-## Step 2: Create Migration
+## Step 5: Create Migration
 
 ```php
 // database/migrations/XXXX_XX_XX_XXXXXX_create_admins_table.php
@@ -82,7 +146,7 @@ return new class extends Migration
 };
 ```
 
-## Step 3: Create Role Model
+## Step 6: Create Role Model
 
 ```php
 // app/Models/Role.php
@@ -98,7 +162,7 @@ class Role extends SpatieRole
 }
 ```
 
-## Step 4: Create API Controller
+## Step 7: Create API Controller
 
 ```php
 // app/Http/Controllers/Api/TenantController.php
@@ -121,16 +185,27 @@ class TenantController extends Controller
      */
     public function create(CreateTenantRequest $request)
     {
-        $password = $request->password ?? Str::random(12);
+        // Auto-generate unique credentials for each rental
+        $uniqueId = time() . rand(1000, 9999);
+        $generatedName = 'User_' . $uniqueId;
+        $generatedEmail = 'user_' . $uniqueId . '@rental.local';
+        $generatedPassword = Str::random(12);
         
+        // Create admin with auto-generated credentials
         $admin = Admin::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($password),
+            'name' => $generatedName,
+            'email' => $generatedEmail,
+            'password' => Hash::make($generatedPassword),
             'status' => 'active',
-            'created_by' => ['type' => 'api', 'timestamp' => now()->toDateTimeString()]
+            'created_by' => [
+                'type' => 'api', 
+                'timestamp' => now()->toDateTimeString(),
+                'rental_id' => $request->rental_id ?? null,
+                'platform_user_id' => $request->platform_user_id ?? null
+            ]
         ]);
         
+        // Assign tenant role
         $tenantRole = Role::where('name', 'tenant')->where('guard_name', 'admin')->first();
         if ($tenantRole) {
             $admin->assignRole($tenantRole);
@@ -142,7 +217,7 @@ class TenantController extends Controller
                 'admin_id' => $admin->id,
                 'name' => $admin->name,
                 'email' => $admin->email,
-                'password' => $password,
+                'password' => $generatedPassword,
                 'admin_url' => config('app.url') . '/admin/login',
                 'role' => 'tenant'
             ]
@@ -224,7 +299,7 @@ class TenantController extends Controller
 }
 ```
 
-## Step 5: Create API Routes
+## Step 8: Create API Routes with Authentication
 
 ```php
 // routes/api.php
@@ -233,14 +308,16 @@ class TenantController extends Controller
 use App\Http\Controllers\Api\TenantController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/tenant/create', [TenantController::class, 'create']);
-Route::post('/tenant/hold/{adminId}', [TenantController::class, 'hold']);
-Route::post('/tenant/suspend/{adminId}', [TenantController::class, 'suspend']);
-Route::post('/tenant/activate/{adminId}', [TenantController::class, 'activate']);
-Route::get('/tenant/status/{adminId}', [TenantController::class, 'checkStatus']);
+Route::middleware('validate.ups.connector')->group(function () {
+    Route::post('/tenant/create', [TenantController::class, 'create']);
+    Route::post('/tenant/hold/{adminId}', [TenantController::class, 'hold']);
+    Route::post('/tenant/suspend/{adminId}', [TenantController::class, 'suspend']);
+    Route::post('/tenant/activate/{adminId}', [TenantController::class, 'activate']);
+    Route::get('/tenant/status/{adminId}', [TenantController::class, 'checkStatus']);
+});
 ```
 
-## Step 6: Create Request Validation
+## Step 9: Create Request Validation
 
 ```php
 // app/Http/Requests/Api/CreateTenantRequest.php
@@ -267,68 +344,34 @@ class CreateTenantRequest extends FormRequest
 }
 ```
 
-## Step 7: Update TenantController to Auto-Generate Credentials
-
-```php
-// Update the create method in app/Http/Controllers/Api/TenantController.php
-public function create(CreateTenantRequest $request)
-{
-    // Auto-generate unique credentials for each rental
-    $uniqueId = time() . rand(1000, 9999);
-    $generatedName = 'User_' . $uniqueId;
-    $generatedEmail = 'user_' . $uniqueId . '@rental.local';
-    $generatedPassword = Str::random(12);
-    
-    // Create admin with auto-generated credentials
-    $admin = Admin::create([
-        'name' => $generatedName,
-        'email' => $generatedEmail,
-        'password' => Hash::make($generatedPassword),
-        'status' => 'active',
-        'created_by' => [
-            'type' => 'api', 
-            'timestamp' => now()->toDateTimeString(),
-            'rental_id' => $request->rental_id ?? null,
-            'platform_user_id' => $request->platform_user_id ?? null
-        ]
-    ]);
-    
-    // Assign tenant role
-    $tenantRole = Role::where('name', 'tenant')->where('guard_name', 'admin')->first();
-    if ($tenantRole) {
-        $admin->assignRole($tenantRole);
-    }
-    
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'admin_id' => $admin->id,
-            'name' => $admin->name,
-            'email' => $admin->email,
-            'password' => $generatedPassword,
-            'admin_url' => config('app.url') . '/admin/login',
-            'role' => 'tenant'
-        ]
-    ], 201);
-}
-```
-
 ## API Endpoints Summary
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| POST | `/api/tenant/create` | Create new tenant admin |
-| POST | `/api/tenant/hold/{adminId}` | Put tenant on hold (rental expired) |
-| POST | `/api/tenant/suspend/{adminId}` | Suspend tenant account |
-| POST | `/api/tenant/activate/{adminId}` | Activate tenant account |
-| GET | `/api/tenant/status/{adminId}` | Check tenant status |
+| Method | Endpoint | Purpose | Auth Required |
+|--------|----------|---------| ------------- |
+| POST | `/api/tenant/create` | Create new tenant admin | ✅ Yes |
+| POST | `/api/tenant/hold/{adminId}` | Put tenant on hold (rental expired) | ✅ Yes |
+| POST | `/api/tenant/suspend/{adminId}` | Suspend tenant account | ✅ Yes |
+| POST | `/api/tenant/activate/{adminId}` | Activate tenant account | ✅ Yes |
+| GET | `/api/tenant/status/{adminId}` | Check tenant status | ✅ Yes |
+
+## Authentication Headers
+
+All API requests must include these headers:
+
+```
+Authorization: Bearer {UPS_PROJECT_CONNECTOR_API_KEY}
+X-Platform-Secret: {UPS_PROJECT_CONNECTOR_API_SECRET}
+X-User-ID: {authenticated_user_id}
+```
 
 ## Integration Steps
 
 1. Copy all code from this guide into your new project
-2. Run migrations: `php artisan migrate`
-3. Seed roles: `php artisan db:seed PermissionSeeder`
-4. Deploy your project
-5. Get your API URL (e.g., `http://localhost:8002`)
-6. Create project on Sites Platform with this API URL
-7. Users can now rent your project!
+2. Add credentials to `.env`
+3. Create middleware and register it
+4. Run migrations: `php artisan migrate`
+5. Seed roles: `php artisan db:seed PermissionSeeder`
+6. Deploy your project
+7. Get your API URL (e.g., `http://localhost:8002`)
+8. Create project on Sites Platform with this API URL
+9. Users can now rent your project!

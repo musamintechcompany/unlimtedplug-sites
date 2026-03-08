@@ -125,4 +125,7 @@ return [
 
     'admin_password' => env('ADMIN_PROJECTS_PASSWORD'),
 
+    'ups_project_connector_api_key' => env('UPS_PROJECT_CONNECTOR_API_KEY'),
+    'ups_project_connector_api_secret' => env('UPS_PROJECT_CONNECTOR_API_SECRET'),
+
 ];

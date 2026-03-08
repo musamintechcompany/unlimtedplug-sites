@@ -19,17 +19,24 @@ class NotificationService
         ]);
     }
 
-    public static function paymentSuccess(Model $notifiable, int $credits, float $price, string $currency): Notification
+    public static function paymentSuccess(Model $notifiable, int $credits, float $price, string $currency, int $totalCredits = null): Notification
     {
         $currencyInfo = config('payment.currencies')[$currency] ?? ['symbol' => '$'];
         $symbol = $currencyInfo['symbol'];
+        $total = $totalCredits ?? $credits;
+        $bonus = $total - $credits;
+        
+        $data = ['credits' => $credits, 'total' => $total, 'price' => $price, 'currency' => $currency];
+        if ($bonus > 0) {
+            $data['bonus'] = $bonus;
+        }
         
         return self::create(
             $notifiable,
             'payment_success',
             'Payment Successful',
             "You have successfully purchased {$credits} credits for {$symbol}{$price}",
-            ['credits' => $credits, 'price' => $price, 'currency' => $currency]
+            $data
         );
     }
 
@@ -51,6 +58,55 @@ class NotificationService
             'rental_expired',
             'Rental Expired',
             "Your rental for '{$projectName}' has expired",
+            ['project_name' => $projectName]
+        );
+    }
+
+    public static function rentalCreated(Model $notifiable, string $projectName, int $credits, int $durationValue, string $durationType, $rentalId = null): Notification
+    {
+        $durationLabel = match($durationType) {
+            'daily' => 'Day(s)',
+            'weekly' => 'Week(s)',
+            'monthly' => 'Month(s)',
+            'yearly' => 'Year(s)',
+            default => $durationType
+        };
+        
+        return self::create(
+            $notifiable,
+            'rental_created',
+            'Rental Created',
+            "You have rented '{$projectName}' for {$durationValue} {$durationLabel} ({$credits} credits)",
+            ['project_name' => $projectName, 'credits' => $credits, 'duration_value' => $durationValue, 'duration_type' => $durationType]
+        );
+    }
+
+    public static function rentalRenewed(Model $notifiable, string $projectName, int $credits, int $quantity, string $durationType, $rentalId = null): Notification
+    {
+        $durationLabel = match($durationType) {
+            'daily' => 'Day(s)',
+            'weekly' => 'Week(s)',
+            'monthly' => 'Month(s)',
+            'yearly' => 'Year(s)',
+            default => $durationType
+        };
+        
+        return self::create(
+            $notifiable,
+            'rental_renewed',
+            'Rental Renewed',
+            "You have renewed '{$projectName}' for {$quantity} {$durationLabel} ({$credits} credits)",
+            ['project_name' => $projectName, 'credits' => $credits, 'quantity' => $quantity, 'duration_type' => $durationType]
+        );
+    }
+
+    public static function rentalSuspended(Model $notifiable, string $projectName, $rentalId = null): Notification
+    {
+        return self::create(
+            $notifiable,
+            'rental_suspended',
+            'Rental Suspended',
+            "Your rental for '{$projectName}' has been suspended due to expiry",
             ['project_name' => $projectName]
         );
     }

@@ -15,19 +15,22 @@ return new class extends Migration
             $table->uuid('rentable_project_id');
             
             // Rental details
-            $table->integer('duration_days');
+            $table->string('duration_type')->default('daily');
+            $table->integer('duration_value')->default(1);
             $table->decimal('credits_cost', 20, 2);
             $table->dateTime('rental_starts_at')->nullable();
             $table->dateTime('rental_expires_at')->nullable();
             $table->json('renewal_history')->nullable();
             $table->json('details_history')->nullable();
+            $table->json('initial_details')->nullable();
             
             // Admin credentials from Shipping API
             $table->string('admin_id')->nullable();
             $table->string('admin_email');
             $table->string('admin_password')->nullable();
+            $table->string('admin_url')->nullable();
             
-            // Status
+            // Status (use 'expired' instead of 'on_hold' for clarity)
             $table->string('status')->default('active');
             
             $table->timestamps();

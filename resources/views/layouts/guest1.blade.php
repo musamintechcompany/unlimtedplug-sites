@@ -18,7 +18,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans text-[#1b1b18] antialiased relative overflow-x-hidden bg-[#FDFDFC]">
-        <div class="min-h-screen relative">
+        <div class="min-h-screen relative flex flex-col">
             <!-- Navigation -->
             <nav x-data="{ 
                 open: false, 
@@ -145,9 +145,12 @@
             </nav>
 
             <!-- Page Content -->
-            <main class="pt-16">
+            <main class="pt-16 flex-1">
                 {{ $slot }}
             </main>
+
+            <!-- Footer -->
+            @include('footer')
         </div>
     </body>
 </html>

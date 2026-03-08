@@ -18,12 +18,14 @@ class PaymentController extends Controller
             $request->validate([
                 'transaction_id' => 'required',
                 'credits' => 'required|integer|min:1',
+                'base_credits' => 'nullable|integer|min:1',
                 'currency' => 'required|string',
                 'price' => 'required|numeric|min:0'
             ]);
 
             $transactionId = (string) $request->transaction_id;
             $credits = $request->credits;
+            $baseCredits = $request->base_credits ?? $credits;
             $currency = $request->currency;
             $price = (float) $request->price;
             $user = auth()->user();
@@ -74,7 +76,7 @@ class PaymentController extends Controller
                 return response()->json(['success' => false, 'message' => 'Transaction already processed'], 400);
             }
 
-            // Add credits to wallet
+            // Add credits to wallet (total including bonus)
             $wallet = $user->wallet;
             if (!$wallet) {
                 Log::error('Wallet not found for user', ['user_id' => $user->id]);
@@ -83,7 +85,7 @@ class PaymentController extends Controller
             
             $wallet->increment('credits_balance', $credits);
 
-            // Create transaction record
+            // Create transaction record (store total credits including bonus)
             Transaction::create([
                 'transactable_type' => get_class($user),
                 'transactable_id' => $user->id,
@@ -94,15 +96,17 @@ class PaymentController extends Controller
                 'description' => "Credit purchase: {$credits} credits (Flutterwave: {$transactionId})"
             ]);
 
-            Log::info('Payment verified and credits added', ['user_id' => $user->id, 'credits' => $credits]);
+            Log::info('Payment verified and credits added', ['user_id' => $user->id, 'total_credits' => $credits, 'base_credits' => $baseCredits]);
 
-            // Create notification
-            NotificationService::paymentSuccess($user, $credits, $price, $currency);
+            // Create notification with base and total credits
+            NotificationService::paymentSuccess($user, $baseCredits, $price, $currency, $credits);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Credits added successfully',
-                'new_balance' => $wallet->fresh()->credits_balance
+                'new_balance' => $wallet->fresh()->credits_balance,
+                'total_credits_added' => $credits,
+                'base_credits' => $baseCredits
             ]);
         } catch (\Exception $e) {
             Log::error('Payment verification exception', [
@@ -111,7 +115,7 @@ class PaymentController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'An error occurred'], 500);
         }
     }
 }

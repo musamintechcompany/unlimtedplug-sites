@@ -31,11 +31,11 @@
                     <!-- Pricing comparison -->
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Original</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Initial Rental</p>
                             <p class="text-sm font-semibold text-gray-900 dark:text-[#EDEDEC]" id="originalPrice"></p>
                         </div>
                         <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
-                            <p class="text-xs text-blue-600 dark:text-blue-300 mb-1">Current</p>
+                            <p class="text-xs text-blue-600 dark:text-blue-300 mb-1">Current Price</p>
                             <p class="text-sm font-semibold text-blue-900 dark:text-blue-100" id="currentPrice"></p>
                         </div>
                     </div>
@@ -62,10 +62,6 @@
                         </div>
                         <div class="border-t border-gray-300 dark:border-gray-600 pt-2">
                             <div class="flex justify-between text-xs">
-                                <span class="text-gray-600 dark:text-gray-400">Expires</span>
-                                <span>{{ $rental->rental_expires_at->format('M d, Y') }}</span>
-                            </div>
-                            <div class="flex justify-between text-xs mt-1">
                                 <span class="text-gray-600 dark:text-gray-400">New Expiry</span>
                                 <span class="font-bold text-indigo-900 dark:text-indigo-100" id="newExpiry"></span>
                             </div>
@@ -79,12 +75,13 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="flex gap-2 mt-4">
-                    <button onclick="closeRenewModal()" class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-[#EDEDEC] text-sm rounded-lg transition">
+                <div class="flex gap-2 mt-4" id="renew-actions">
+                    <button onclick="closeRenewModal()" id="renew-cancel-btn" class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-[#EDEDEC] text-sm rounded-lg transition">
                         Cancel
                     </button>
-                    <button onclick="submitRenewal()" id="renewButton" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition">
-                        Confirm
+                    <button onclick="submitRenewal()" id="renewButton" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition flex items-center justify-center gap-2">
+                        <svg id="renew-spinner" class="w-4 h-4 hidden animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span id="renew-text">Confirm</span>
                     </button>
                 </div>
             </div>

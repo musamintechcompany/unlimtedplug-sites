@@ -25,7 +25,6 @@ class RentalController extends Controller
 
     public function show(Rental $rental)
     {
-        // Ensure user can only view their own rentals
         if ($rental->user_id !== auth()->id()) {
             abort(403);
         }
@@ -36,7 +35,10 @@ class RentalController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('Rental store method called', ['user_id' => auth()->id()]);
+        
         if (!auth()->check()) {
+            \Log::warning('User not authenticated for rental creation');
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
@@ -58,12 +60,7 @@ class RentalController extends Controller
             );
 
             if (!$rental) {
-                \Log::warning('Rental creation returned null', [
-                    'user_id' => auth()->id(),
-                    'project_id' => $validated['project_id'],
-                    'duration_type' => $validated['duration_type'],
-                    'duration_value' => $validated['duration_value']
-                ]);
+                \Log::warning('Rental creation returned null', ['user_id' => auth()->id()]);
                 return response()->json([
                     'success' => false,
                     'error' => 'Rental creation failed. This could be due to insufficient credits or the target project being unavailable. Please check your credit balance and try again.'
@@ -76,21 +73,52 @@ class RentalController extends Controller
                 'message' => 'Rental created successfully'
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed', ['errors' => $e->errors()]);
             return response()->json([
                 'success' => false,
                 'error' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Rental creation failed: ' . $e->getMessage(), [
-                'user_id' => auth()->id(),
-                'request' => $request->all(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            \Log::error('Rental creation exception: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'error' => 'An error occurred while creating the rental. Please try again.'
+                'error' => 'An error occurred while creating the rental: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function updateCredentials(Rental $rental)
+    {
+        if ($rental->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $project = $rental->rentableProject;
+            $url = "{$project->api_url}/api/tenant/status/{$rental->admin_id}";
+            
+            $response = \Illuminate\Support\Facades\Http::timeout(60)
+                ->acceptJson()
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . config('app.ups_project_connector_api_key'),
+                    'X-Platform-Secret' => config('app.ups_project_connector_api_secret'),
+                    'X-User-ID' => auth()->id()
+                ])
+                ->get($url);
+
+            if ($response->successful() && ($response->json()['success'] ?? false)) {
+                $data = $response->json()['data'];
+                $rental->update([
+                    'admin_email' => $data['email'] ?? $rental->admin_email,
+                    'admin_url' => $data['admin_url'] ?? $rental->admin_url
+                ]);
+                return response()->json(['success' => true, 'data' => $data]);
+            }
+            return response()->json(['success' => false, 'error' => 'Failed to fetch credentials'], 400);
+        } catch (\Exception $e) {
+            \Log::error("Failed to update credentials: " . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'An error occurred'], 500);
         }
     }
 
@@ -100,9 +128,11 @@ class RentalController extends Controller
             return response()->json(['success' => false, 'error' => 'Unauthorized'], 403);
         }
 
+        \Log::info('Renewal request received', ['rental_id' => $rental->id]);
+
         $validated = $request->validate([
             'quantity' => 'required|integer|min:1',
-            'duration_type' => 'required|in:days,weeks,months,years'
+            'duration_type' => 'required|in:daily,weekly,monthly,yearly'
         ]);
 
         try {
@@ -110,61 +140,80 @@ class RentalController extends Controller
 
             $project = RentableProject::find($rental->rentable_project_id);
             if (!$project) {
+                \Log::error('Project not found for renewal', ['rental_id' => $rental->id]);
                 return response()->json(['success' => false, 'error' => 'Project no longer exists'], 404);
             }
 
-            // Calculate cost based on duration type
             $priceMap = [
-                'days' => $project->pricing_24h,
-                'weeks' => $project->pricing_7d,
-                'months' => $project->pricing_30d,
-                'years' => $project->pricing_365d
+                'daily' => $project->pricing_24h,
+                'weekly' => $project->pricing_7d,
+                'monthly' => $project->pricing_30d,
+                'yearly' => $project->pricing_365d
             ];
 
             $pricePerUnit = $priceMap[$validated['duration_type']];
             $totalCost = $pricePerUnit * $validated['quantity'];
 
-            // Check user balance
             $wallet = auth()->user()->wallet;
-            if ($wallet->balance < $totalCost) {
+            if ($wallet->credits_balance < $totalCost) {
+                \Log::warning('Insufficient credits for renewal', ['needed' => $totalCost, 'balance' => $wallet->credits_balance]);
                 return response()->json(['success' => false, 'error' => 'Insufficient credits'], 400);
             }
 
-            // Deduct credits
-            $wallet->decrement('balance', $totalCost);
+            $wallet->decrement('credits_balance', $totalCost);
 
-            // Calculate days to add
-            $daysMap = ['days' => 1, 'weeks' => 7, 'months' => 30, 'years' => 365];
-            $daysToAdd = $daysMap[$validated['duration_type']] * $validated['quantity'];
+            $isLocal = config('app.env') === 'local';
+            $secondsMap = $isLocal 
+                ? ['daily' => 120, 'weekly' => 300, 'monthly' => 600, 'yearly' => 900]
+                : ['daily' => 86400, 'weekly' => 604800, 'monthly' => 2592000, 'yearly' => 31536000];
+            $durationSeconds = $secondsMap[$validated['duration_type']] * $validated['quantity'];
 
-            // Extend rental
-            $newExpiry = $rental->rental_expires_at->addDays($daysToAdd);
+            $newExpiry = now()->addSeconds($durationSeconds);
+            
+            if ($rental->status === 'on_hold') {
+                $this->rentalService->restoreCredentialsOnProject($project, $rental->admin_id);
+            }
+
+            $renewalHistory = $rental->renewal_history ?? [];
+            $renewalHistory[] = [
+                'renewed_at' => now()->toIso8601String(),
+                'quantity' => $validated['quantity'],
+                'duration_type' => $validated['duration_type'],
+                'cost' => $totalCost,
+                'new_expiry' => $newExpiry->toIso8601String()
+            ];
+
             $rental->update([
+                'duration_value' => $validated['quantity'],
+                'duration_type' => $validated['duration_type'],
                 'rental_expires_at' => $newExpiry,
                 'status' => 'active',
-                'duration_days' => $rental->duration_days + $daysToAdd
+                'renewal_history' => $renewalHistory
             ]);
 
-            // Create transaction record
             \App\Models\Transaction::create([
-                'user_id' => auth()->id(),
-                'type' => 'debit',
+                'transactable_type' => Rental::class,
+                'transactable_id' => $rental->id,
                 'amount' => $totalCost,
-                'description' => "Rental renewal: {$project->name} (+{$validated['quantity']} {$validated['duration_type']})",
-                'status' => 'completed'
+                'type' => 'rental',
+                'description' => "Renewal: {$project->name} for {$validated['quantity']} {$validated['duration_type']}"
             ]);
+
+            \App\Services\NotificationService::rentalRenewed(auth()->user(), $project->name, $totalCost, $validated['quantity'], $validated['duration_type'], $rental->id);
 
             DB::commit();
+
+            \Log::info('Renewal successful', ['rental_id' => $rental->id, 'new_expiry' => $newExpiry]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Rental renewed successfully',
-                'new_expiry' => $newExpiry->format('M d, Y')
+                'new_expiry' => $newExpiry->toIso8601String()
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Rental renewal failed: ' . $e->getMessage());
-            return response()->json(['success' => false, 'error' => 'Failed to renew rental'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to renew rental: ' . $e->getMessage()], 500);
         }
     }
 }

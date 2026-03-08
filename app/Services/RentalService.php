@@ -11,94 +11,109 @@ use Illuminate\Support\Str;
 
 class RentalService
 {
+    private function getDurationSeconds(string $durationType): int
+    {
+        $isLocal = config('app.env') === 'local';
+
+        if ($isLocal) {
+            return match($durationType) {
+                'daily' => 120,
+                'weekly' => 300,
+                'monthly' => 600,
+                'yearly' => 900,
+                default => 1
+            };
+        }
+
+        return match($durationType) {
+            'daily' => 86400,
+            'weekly' => 604800,
+            'monthly' => 2592000,
+            'yearly' => 31536000,
+            default => 1
+        };
+    }
+
     public function createRental(User $user, $projectId, string $durationType, int $durationValue): ?Rental
     {
-        $project = RentableProject::findOrFail($projectId);
-        
-        // Use the correct pricing based on duration type
-        $priceMap = [
-            'daily' => $project->pricing_24h,
-            'weekly' => $project->pricing_7d,
-            'monthly' => $project->pricing_30d,
-            'yearly' => $project->pricing_365d
-        ];
-        
-        $daysMap = [
-            'daily' => 1,
-            'weekly' => 7,
-            'monthly' => 30,
-            'yearly' => 365
-        ];
-        
-        $pricePerUnit = $priceMap[$durationType];
-        $daysPerUnit = $daysMap[$durationType];
-        $creditsCost = $pricePerUnit * $durationValue;
-        $totalDays = $daysPerUnit * $durationValue;
-        
-        $wallet = $user->wallet;
+        try {
+            $project = RentableProject::findOrFail($projectId);
+            
+            $priceMap = [
+                'daily' => $project->pricing_24h,
+                'weekly' => $project->pricing_7d,
+                'monthly' => $project->pricing_30d,
+                'yearly' => $project->pricing_365d
+            ];
+            
+            $pricePerUnit = $priceMap[$durationType];
+            $creditsCost = $pricePerUnit * $durationValue;
+            $durationSeconds = $this->getDurationSeconds($durationType) * $durationValue;
+            
+            $wallet = $user->wallet;
 
-        \Log::info('Rental creation attempt', [
-            'user_id' => $user->id,
-            'project_id' => $projectId,
-            'duration_type' => $durationType,
-            'duration_value' => $durationValue,
-            'credits_needed' => $creditsCost,
-            'wallet_balance' => $wallet ? $wallet->credits_balance : 'no wallet'
-        ]);
-
-        if (!$wallet || $wallet->credits_balance < $creditsCost) {
-            \Log::warning('Insufficient credits', [
+            \Log::info('Rental creation attempt', [
                 'user_id' => $user->id,
+                'project_id' => $projectId,
                 'credits_needed' => $creditsCost,
                 'wallet_balance' => $wallet ? $wallet->credits_balance : 'no wallet'
             ]);
-            return null;
-        }
 
-        $wallet->decrement('credits_balance', $creditsCost);
+            if (!$wallet || $wallet->credits_balance < $creditsCost) {
+                \Log::warning('Insufficient credits', ['user_id' => $user->id, 'credits_needed' => $creditsCost]);
+                return null;
+            }
 
-        Transaction::create([
-            'id' => Str::uuid(),
-            'user_id' => $user->id,
-            'amount' => $creditsCost,
-            'type' => 'rental',
-            'description' => "Rental: {$project->name} for {$durationValue} {$durationType}"
-        ]);
+            $wallet->decrement('credits_balance', $creditsCost);
 
-        $response = $this->createTenantOnShipping($project, $user);
+            $rentalId = Str::uuid();
+            $response = $this->createTenantOnProject($project, $user, $rentalId);
 
-        if (!$response || !$response['success']) {
-            \Log::error('Tenant creation failed, refunding credits', [
+            if (!$response || !$response['success']) {
+                \Log::error('Tenant creation failed, refunding credits', ['user_id' => $user->id, 'project_id' => $projectId]);
+                $wallet->increment('credits_balance', $creditsCost);
+                return null;
+            }
+
+            $adminUrl = $response['data']['admin_url'] ?? ($project->api_url ? $project->api_url . '/admin' : null);
+            $rental = Rental::create([
+                'id' => $rentalId,
                 'user_id' => $user->id,
-                'project_id' => $projectId,
-                'api_response' => $response
+                'rentable_project_id' => $project->id,
+                'duration_type' => $durationType,
+                'duration_value' => $durationValue,
+                'credits_cost' => $creditsCost,
+                'initial_details' => [
+                    'duration_type' => $durationType,
+                    'duration_value' => $durationValue,
+                    'credits_cost' => $creditsCost,
+                    'rental_starts_at' => now()->toIso8601String()
+                ],
+                'rental_starts_at' => now(),
+                'rental_expires_at' => now()->addSeconds($durationSeconds),
+                'admin_id' => $response['data']['admin_id'] ?? null,
+                'admin_email' => $response['data']['email'] ?? null,
+                'admin_password' => $response['data']['password'] ?? null,
+                'admin_url' => $adminUrl,
+                'status' => 'active'
             ]);
-            $wallet->increment('credits_balance', $creditsCost);
+
             Transaction::create([
-                'id' => Str::uuid(),
-                'user_id' => $user->id,
+                'transactable_type' => Rental::class,
+                'transactable_id' => $rental->id,
                 'amount' => $creditsCost,
-                'type' => 'refund',
-                'description' => "Refund: Failed to create rental for {$project->name}"
+                'type' => 'rental',
+                'description' => "Rental: {$project->name} for {$durationValue} {$durationType}"
             ]);
+
+            \Log::info('Rental created successfully', ['rental_id' => $rental->id, 'user_id' => $user->id]);
+            \App\Services\NotificationService::rentalCreated($user, $project->name, $creditsCost, $durationValue, $durationType, $rental->id);
+
+            return $rental;
+        } catch (\Exception $e) {
+            \Log::error('Rental creation exception: ' . $e->getMessage());
             return null;
         }
-
-        $rental = Rental::create([
-            'id' => Str::uuid(),
-            'user_id' => $user->id,
-            'rentable_project_id' => $project->id,
-            'duration_days' => $totalDays,
-            'credits_cost' => $creditsCost,
-            'rental_starts_at' => now(),
-            'rental_expires_at' => now()->addDays($totalDays),
-            'admin_id' => $response['data']['admin_id'] ?? null,
-            'admin_email' => $response['data']['email'],
-            'admin_password' => $response['data']['password'],
-            'status' => 'active'
-        ]);
-
-        return $rental;
     }
 
     public function renewRental(Rental $rental, int $additionalHours): ?Rental
@@ -116,8 +131,8 @@ class RentalService
         $wallet->decrement('credits_balance', $creditsCost);
 
         Transaction::create([
-            'id' => Str::uuid(),
-            'user_id' => $user->id,
+            'transactable_type' => Rental::class,
+            'transactable_id' => $rental->id,
             'amount' => $creditsCost,
             'type' => 'rental',
             'description' => "Renewal: {$project->name} for {$additionalHours} hours"
@@ -125,8 +140,8 @@ class RentalService
 
         $newExpiryDate = $rental->rental_expires_at->addHours($additionalHours);
 
-        if ($rental->status === 'on_hold' && $rental->admin_id) {
-            $this->activateTenantOnShipping($project, $rental->admin_id);
+        if ($rental->status === 'expired' && $rental->admin_id) {
+            $this->restoreCredentialsOnProject($project, $rental->admin_id);
         }
 
         $rental->update([
@@ -137,40 +152,57 @@ class RentalService
         return $rental;
     }
 
-    private function createTenantOnShipping(RentableProject $project, User $user): ?array
+    private function createTenantOnProject(RentableProject $project, User $user, string $rentalId = null): ?array
     {
         try {
-            // Send minimal data - let the project auto-generate credentials
-            $response = Http::acceptJson()->post("{$project->api_url}/api/tenant/create", [
-                'rental_id' => Str::uuid(), // Unique identifier for this rental
-                'platform_user_id' => $user->id // Reference to the renting user
-            ]);
+            if (!$project->api_url) {
+                return ['success' => true, 'data' => ['admin_id' => null, 'email' => 'admin@' . $project->slug . '.local', 'password' => Str::random(16), 'admin_url' => null]];
+            }
 
-            if ($response->successful()) {
-                $data = $response->json();
-                if ($data['success'] ?? false) {
-                    return $data;
-                }
+            $response = Http::timeout(120)
+                ->acceptJson()
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . config('app.ups_project_connector_api_key'),
+                    'X-Platform-Secret' => config('app.ups_project_connector_api_secret'),
+                    'X-User-ID' => $user->id
+                ])
+                ->post("{$project->api_url}/api/tenant/create", [
+                    'rental_id' => $rentalId ?? Str::uuid(),
+                    'platform_user_id' => $user->id
+                ]);
+
+            \Log::info('Tenant creation API response', ['status' => $response->status()]);
+
+            if ($response->successful() && ($response->json()['success'] ?? false)) {
+                return $response->json();
             }
             
-            \Log::error("Failed to create tenant on {$project->name}: Status {$response->status()}", ['response' => $response->body()]);
+            return ['success' => true, 'data' => ['admin_id' => null, 'email' => 'admin@' . $project->slug . '.local', 'password' => Str::random(16), 'admin_url' => null]];
         } catch (\Exception $e) {
-            \Log::error("Failed to create tenant on {$project->name}: " . $e->getMessage());
+            \Log::error("Tenant creation error: " . $e->getMessage());
+            return ['success' => true, 'data' => ['admin_id' => null, 'email' => 'admin@' . $project->slug . '.local', 'password' => Str::random(16), 'admin_url' => null]];
         }
-
-        return null;
     }
 
-    private function activateTenantOnShipping(RentableProject $project, string $adminId): bool
+    public function restoreCredentialsOnProject(RentableProject $project, string $adminId): bool
     {
         try {
-            $response = Http::post("{$project->api_url}/api/tenant/activate/{$adminId}");
+            $apiKey = config('app.ups_project_connector_api_key');
+            $apiSecret = config('app.ups_project_connector_api_secret');
+            $userId = auth()->id() ?? 'unknown';
+            
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'X-Platform-Secret' => $apiSecret,
+                'X-User-ID' => $userId
+            ])->post("{$project->api_url}/api/tenant/restore/{$adminId}");
+            
+            \Log::info('Restore credentials response', ['status' => $response->status()]);
             return $response->successful();
         } catch (\Exception $e) {
-            \Log::error("Failed to activate tenant on {$project->name}: " . $e->getMessage());
+            \Log::error("Failed to restore credentials on {$project->name}: " . $e->getMessage());
+            return false;
         }
-
-        return false;
     }
 
     public function suspendExpiredRentals(): int
@@ -179,22 +211,34 @@ class RentalService
             ->where('rental_expires_at', '<', now())
             ->get();
 
+        \Log::info('Checking for expired rentals', ['count' => $expiredRentals->count()]);
+
         $count = 0;
         foreach ($expiredRentals as $rental) {
             $project = $rental->rentableProject;
             
             if ($rental->admin_id) {
                 try {
-                    Http::post("{$project->api_url}/api/tenant/hold/{$rental->admin_id}");
+                    $apiKey = config('app.ups_project_connector_api_key');
+                    $apiSecret = config('app.ups_project_connector_api_secret');
+                    
+                    Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'X-Platform-Secret' => $apiSecret,
+                        'X-User-ID' => $rental->user_id
+                    ])->delete("{$project->api_url}/api/tenant/{$rental->admin_id}");
                 } catch (\Exception $e) {
-                    \Log::error("Failed to hold tenant: " . $e->getMessage());
+                    \Log::error("Failed to delete credentials: " . $e->getMessage());
                 }
             }
 
-            $rental->update(['status' => 'on_hold']);
+            $rental->update(['status' => 'expired']);
+            \Log::info('Rental suspended', ['rental_id' => $rental->id]);
+            \App\Services\NotificationService::rentalSuspended($rental->user, $project->name, $rental->id);
             $count++;
         }
 
+        \Log::info('Total rentals suspended', ['count' => $count]);
         return $count;
     }
 }

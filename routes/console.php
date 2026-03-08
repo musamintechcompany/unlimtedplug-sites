@@ -8,4 +8,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('rentals:suspend-expired')->hourly();
+if (config('app.env') === 'local') {
+    Schedule::command('rentals:suspend-expired')->everySecond();
+} else {
+    Schedule::command('rentals:suspend-expired')->everyMinute();
+}

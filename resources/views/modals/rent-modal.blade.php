@@ -81,7 +81,7 @@
             </div>
         </div>
         <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-0 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <button id="confirm-rental-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400" disabled onclick="confirmRental()">Confirm Rental</button>
+            <button id="confirm-rental-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 flex items-center gap-2" disabled onclick="confirmRental()"><svg id="confirm-spinner" class="w-4 h-4 hidden animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span id="confirm-text">Confirm Rental</span></button>
         </div>
     </div>
 </div>
@@ -175,81 +175,100 @@
         }
     }
 
-    function confirmRental() {
-        const durationType = document.getElementById('duration-type').value;
-        const quantity = parseInt(document.getElementById('duration-input').value);
-        const projectId = window.projectId;
-        const projectPricing = window.projectPricing || {};
-        const price = projectPricing[durationType];
-        const totalCredits = price * quantity;
-        const confirmBtn = document.getElementById('confirm-rental-btn');
-        
-        // Check if CSRF token exists
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        if (!csrfToken) {
-            alert('CSRF token not found. Please refresh the page.');
-            return;
-        }
-        
-        // Disable button and show loading
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Processing...';
+// ============================================
+// RENTAL CONFIRMATION - MULTI-STEP STATUS
+// ============================================
 
-        console.log('Sending rental request:', {
+/**
+ * Confirm rental with multi-step status messages
+ * Shows: Authenticating -> Validating -> Processing
+ */
+window.confirmRental = function() {
+    const durationType = document.getElementById('duration-type').value;
+    const quantity = parseInt(document.getElementById('duration-input').value);
+    const projectId = window.projectId;
+    const projectPricing = window.projectPricing || {};
+    const price = projectPricing[durationType];
+    const confirmBtn = document.getElementById('confirm-rental-btn');
+    
+    // Validate CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
+    // Disable button and show multi-step status
+    confirmBtn.disabled = true;
+    document.getElementById('confirm-spinner').classList.remove('hidden');
+    document.getElementById('confirm-text').textContent = 'Authenticating...';
+    
+    // Step 1: Authenticating (500ms)
+    setTimeout(() => {
+        document.getElementById('confirm-text').textContent = 'Validating...';
+    }, 500);
+    
+    // Step 2: Validating (1000ms)
+    setTimeout(() => {
+        document.getElementById('confirm-text').textContent = 'Processing...';
+    }, 1000);
+
+    console.log('Sending rental request:', {
+        project_id: projectId,
+        duration_type: durationType,
+        duration_value: quantity
+    });
+
+    // Send rental request
+    fetch('{{ route("rentals.store") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken.content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
             project_id: projectId,
             duration_type: durationType,
             duration_value: quantity
-        });
-
-        fetch('{{ route('rentals.store') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken.content,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                project_id: projectId,
-                duration_type: durationType,
-                duration_value: quantity
-            })
         })
-        .then(response => {
-            console.log('Response status:', response.status);
-            if (response.status === 401) {
-                console.log('User not authenticated, showing login modal');
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Confirm Rental';
-                closeRentDurationModal();
-                document.body.style.overflow = 'hidden';
-                document.getElementById('login-modal').classList.remove('hidden');
-                return null;
-            }
-            if (response.status === 400) {
-                // Try to parse JSON for 400 errors to get specific error message
-                return response.json().catch(() => ({ error: 'Bad request - please check your input' }));
-            }
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.success) {
-                closeRentDurationModal();
-                document.body.style.overflow = 'hidden';
-                document.getElementById('rental-success-modal').classList.remove('hidden');
-            } else if (data && data.error) {
-                alert(data.error);
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Confirm Rental';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (response.status === 401) {
+            // User not authenticated
             confirmBtn.disabled = false;
             confirmBtn.textContent = 'Confirm Rental';
-        });
-    }
+            closeRentDurationModal();
+            document.body.style.overflow = 'hidden';
+            document.getElementById('login-modal').classList.remove('hidden');
+            return null;
+        }
+        if (response.status === 400) {
+            return response.json().catch(() => ({ error: 'Bad request - please check your input' }));
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            // Rental created successfully
+            closeRentDurationModal();
+            document.body.style.overflow = 'hidden';
+            document.getElementById('rental-success-modal').classList.remove('hidden');
+        } else if (data && data.error) {
+            alert(data.error);
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Rental';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Rental';
+    });
+};
 </script>

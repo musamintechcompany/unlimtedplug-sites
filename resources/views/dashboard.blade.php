@@ -30,7 +30,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600 dark:text-[#A1A09A]">Total Rentals</p>
-                            <p class="text-2xl font-bold text-gray-900 dark:text-[#EDEDEC] mt-1">0</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-[#EDEDEC] mt-1">{{ $totalRentals }}</p>
                         </div>
                         <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
                             <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

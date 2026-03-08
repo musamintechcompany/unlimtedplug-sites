@@ -85,7 +85,9 @@ Route::get('/dashboard', function () {
         ->take(3)
         ->get();
     
-    return view('dashboard', compact('activeRentals'));
+    $totalRentals = \App\Models\Rental::where('user_id', auth()->id())->count();
+    
+    return view('dashboard', compact('activeRentals', 'totalRentals'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -105,6 +107,7 @@ Route::middleware('auth')->group(function () {
     Route::post('rentals', [RentalController::class, 'store'])->name('rentals.store');
     Route::get('rentals/{rental}', [RentalController::class, 'show'])->name('rentals.show');
     Route::post('rentals/{rental}/renew', [RentalController::class, 'renew'])->name('rentals.renew');
+    Route::post('rentals/{rental}/update-credentials', [RentalController::class, 'updateCredentials'])->name('rentals.update-credentials');
     
     // API Keys
     Route::resource('api-keys', ApiKeyController::class);

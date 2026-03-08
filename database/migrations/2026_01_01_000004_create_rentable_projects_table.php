@@ -15,7 +15,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('type'); // shipping, website_builder, etc.
             $table->string('api_url');
-            $table->string('api_key')->nullable();
+            $table->string('api_key')->nullable()->unique();
+            $table->string('api_secret')->nullable();
             $table->decimal('pricing_24h', 10, 2)->default(0);
             $table->decimal('pricing_7d', 10, 2)->default(0);
             $table->decimal('pricing_30d', 10, 2)->default(0);
@@ -29,6 +30,8 @@ return new class extends Migration
             $table->index('slug');
             $table->index('type');
             $table->index('status');
+            $table->index('api_key');
+            $table->index('api_secret');
             $table->index('created_at');
         });
     }

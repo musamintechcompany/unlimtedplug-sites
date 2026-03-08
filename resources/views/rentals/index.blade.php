@@ -42,14 +42,14 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                                 @if($rental->status === 'active') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                                @elseif($rental->status === 'on_hold') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                                @elseif($rental->status === 'expired') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                                 @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                                 @endif">
                                                 {{ ucfirst($rental->status) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-[#A1A09A]">
-                                            {{ $rental->duration_days }} days
+                                            {{ ucfirst($rental->duration_type) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-[#A1A09A]">
                                             {{ $rental->rental_expires_at->format('M d, Y') }}

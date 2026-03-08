@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\RentableProject;
+use App\Models\Rental;
 use App\Services\RentalService;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,28 @@ class RentalApiController extends Controller
     public function __construct(RentalService $rentalService)
     {
         $this->rentalService = $rentalService;
+    }
+
+    public function show(Rental $rental)
+    {
+        if ($rental->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $project = $rental->rentableProject;
+        $pricing = [
+            'daily' => $project->pricing_24h,
+            'weekly' => $project->pricing_7d,
+            'monthly' => $project->pricing_30d,
+            'yearly' => $project->pricing_365d
+        ];
+
+        return response()->json([
+            'success' => true,
+            'duration_type' => $rental->duration_type,
+            'pricing' => $pricing,
+            'user_balance' => auth()->user()->wallet->credits_balance ?? 0
+        ]);
     }
 
     public function create(Request $request)
@@ -77,5 +100,30 @@ class RentalApiController extends Controller
                 'expires_at' => $rental->rental_expires_at
             ]
         ], 201);
+    }
+
+    public function updateAdminUrl(Request $request)
+    {
+        $request->validate([
+            'rental_id' => 'required|string',
+            'admin_id' => 'required|string',
+            'admin_url' => 'required|url'
+        ]);
+
+        $rental = Rental::where('id', $request->rental_id)
+            ->orWhere('admin_id', $request->admin_id)
+            ->first();
+
+        if (!$rental) {
+            return response()->json(['success' => false, 'message' => 'Rental not found'], 404);
+        }
+
+        $rental->update(['admin_url' => $request->admin_url]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin URL updated successfully',
+            'data' => ['rental_id' => $rental->id, 'admin_url' => $rental->admin_url]
+        ]);
     }
 }

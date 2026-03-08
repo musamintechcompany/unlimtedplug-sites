@@ -133,14 +133,23 @@ window.closeRentDurationModal = closeRentDurationModal;
 // Renewal Modal Functions
 let renewalData = {};
 
-window.openRenewModal = function(rentalId, projectId, durationDays, originalCost, expiresAt, userBalance) {
+window.handleRenewClick = function(status, rentalId, projectId, durationValue, durationType, originalCost, expiresAt, userBalance) {
+    if (status === 'active') {
+        return; // Tooltip already shown via CSS
+    }
+    if (status === 'on_hold') {
+        window.openRenewModal(rentalId, projectId, durationValue, durationType, originalCost, expiresAt, userBalance);
+    }
+};
+
+window.openRenewModal = function(rentalId, projectId, durationValue, durationType, originalCost, expiresAt, userBalance) {
     document.body.style.overflow = 'hidden';
     document.getElementById('renewModal').classList.remove('hidden');
     document.getElementById('loadingState').classList.remove('hidden');
     document.getElementById('errorState').classList.add('hidden');
     document.getElementById('renewForm').classList.add('hidden');
     
-    window.RENTAL_DATA = { id: rentalId, projectId, durationDays, originalCost, expiresAt, userBalance };
+    window.RENTAL_DATA = { id: rentalId, projectId, durationValue, durationType, originalCost, expiresAt, userBalance };
     
     fetch(`/api/projects/${projectId}/check`)
         .then(response => response.json())
@@ -150,9 +159,8 @@ window.openRenewModal = function(rentalId, projectId, durationDays, originalCost
                 return;
             }
             renewalData = {
-                originalPricePerDay: originalCost / durationDays,
                 currentPricing: data.pricing,
-                durationDays: durationDays
+                durationType: durationType
             };
             showRenewForm();
         })
@@ -174,27 +182,24 @@ function showRenewForm() {
     document.getElementById('loadingState').classList.add('hidden');
     document.getElementById('renewForm').classList.remove('hidden');
     
-    const durationDays = renewalData.durationDays;
-    let durationType = 'days', pricePerUnit = renewalData.currentPricing.pricing_24h;
+    const durationType = renewalData.durationType;
+    const priceMap = {
+        'daily': renewalData.currentPricing.pricing_24h,
+        'weekly': renewalData.currentPricing.pricing_7d,
+        'monthly': renewalData.currentPricing.pricing_30d,
+        'yearly': renewalData.currentPricing.pricing_365d
+    };
     
-    if (durationDays >= 365) {
-        durationType = 'years';
-        pricePerUnit = renewalData.currentPricing.pricing_365d;
-    } else if (durationDays >= 30) {
-        durationType = 'months';
-        pricePerUnit = renewalData.currentPricing.pricing_30d;
-    } else if (durationDays >= 7) {
-        durationType = 'weeks';
-        pricePerUnit = renewalData.currentPricing.pricing_7d;
-    }
+    const pricePerUnit = priceMap[durationType];
+    const displayType = durationType === 'daily' ? 'day' : durationType === 'weekly' ? 'week' : durationType === 'monthly' ? 'month' : 'year';
+    const displayTypePlural = displayType + 's';
     
     renewalData.durationType = durationType;
     renewalData.pricePerUnit = pricePerUnit;
     
-    const originalTotal = renewalData.originalPricePerDay * durationDays;
-    document.getElementById('originalPrice').textContent = `${originalTotal.toFixed(0)} cr`;
-    document.getElementById('currentPrice').textContent = `${pricePerUnit} cr/${durationType.slice(0, -1)}`;
-    document.getElementById('durationType').textContent = durationType;
+    document.getElementById('originalPrice').textContent = `${window.RENTAL_DATA.originalCost} cr`;
+    document.getElementById('currentPrice').textContent = `${pricePerUnit} cr/${displayType}`;
+    document.getElementById('durationType').textContent = displayTypePlural;
     
     calculateRenewal();
 }
@@ -208,7 +213,7 @@ window.calculateRenewal = function() {
     const currentExpiry = new Date(window.RENTAL_DATA.expiresAt);
     let newExpiry = new Date(currentExpiry);
     
-    const daysMap = {years: 365, months: 30, weeks: 7, days: 1};
+    const daysMap = {yearly: 365, monthly: 30, weekly: 7, daily: 1};
     newExpiry.setDate(newExpiry.getDate() + (quantity * daysMap[renewalData.durationType]));
     
     document.getElementById('newExpiry').textContent = newExpiry.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -222,14 +227,28 @@ window.calculateRenewal = function() {
     document.getElementById('insufficientCredits').classList.toggle('hidden', hasEnough);
     document.getElementById('renewButton').disabled = !hasEnough;
     document.getElementById('renewButton').classList.toggle('opacity-50', !hasEnough);
-};
+};;
 
 window.submitRenewal = function() {
     const quantity = parseInt(document.getElementById('durationInput').value) || 1;
     const button = document.getElementById('renewButton');
+    const cancelBtn = document.getElementById('renew-cancel-btn');
     
     button.disabled = true;
-    button.innerHTML = '<svg class="animate-spin h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    cancelBtn.classList.add('hidden');
+    button.classList.add('w-full');
+    document.getElementById('renew-spinner').classList.remove('hidden');
+    document.getElementById('renew-text').textContent = 'Authenticating...';
+    
+    // Step 1: Authenticating (500ms)
+    setTimeout(() => {
+        document.getElementById('renew-text').textContent = 'Validating...';
+    }, 500);
+    
+    // Step 2: Validating (1000ms)
+    setTimeout(() => {
+        document.getElementById('renew-text').textContent = 'Processing...';
+    }, 1000);
     
     fetch(`/rentals/${window.RENTAL_DATA.id}/renew`, {
         method: 'POST',
@@ -245,20 +264,58 @@ window.submitRenewal = function() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Rental renewed successfully!');
-            window.location.reload();
+            showRenewalSuccess(data.message, data.new_expiry);
         } else {
-            alert(data.error || 'Failed to renew');
+            showRenewalError(data.error || 'Failed to renew');
             button.disabled = false;
-            button.textContent = 'Confirm';
+            cancelBtn.classList.remove('hidden');
+            button.classList.remove('w-full');
+            document.getElementById('renew-spinner').classList.add('hidden');
+            document.getElementById('renew-text').textContent = 'Confirm';
         }
     })
     .catch(() => {
-        alert('An error occurred');
+        showRenewalError('An error occurred');
         button.disabled = false;
-        button.textContent = 'Confirm';
+        cancelBtn.classList.remove('hidden');
+        button.classList.remove('w-full');
+        document.getElementById('renew-spinner').classList.add('hidden');
+        document.getElementById('renew-text').textContent = 'Confirm';
     });
 };
+
+function showRenewalSuccess(message, newExpiry) {
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+        <div class="text-center py-12 px-6">
+            <svg class="h-12 w-12 mx-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-3 text-base font-semibold text-gray-900 dark:text-[#EDEDEC]">Renewal Successful</h3>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${message}</p>
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-500">New expiry: ${new Date(newExpiry).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+            <button onclick="closeRenewModal(); location.reload();" class="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition">
+                Okay
+            </button>
+        </div>
+    `;
+}
+
+function showRenewalError(message) {
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+        <div class="text-center py-12 px-6">
+            <svg class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 class="mt-3 text-base font-semibold text-gray-900 dark:text-[#EDEDEC]">Renewal Failed</h3>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${message}</p>
+            <button onclick="closeRenewModal()" class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition">
+                Close
+            </button>
+        </div>
+    `;
+}
 
 // Quill Editor Initialization
 document.addEventListener('DOMContentLoaded', function() {
@@ -405,18 +462,22 @@ window.selectCustomPackage = function(button) {
     const amount = (credits / 10) * pricePerTen;
     let bonusPercent = credits >= 5000 ? 0.20 : 0.15;
     const bonus = Math.floor(credits * bonusPercent);
+    window.BASE_CREDITS = credits;
     window.selectPackage(credits + bonus, amount, button);
 };
 
 /**
  * Select credit package and initiate payment
  */
-window.selectPackage = function(credits, amount, button) {
+window.selectPackage = function(credits, amount, button, baseCredits = null) {
     const buttonText = button.querySelector('.button-text');
     const buttonSpinner = button.querySelector('.button-spinner');
     buttonText.textContent = 'Processing...';
     buttonSpinner.classList.remove('hidden');
     button.disabled = true;
+    
+    // Store base credits for notification
+    window.BASE_CREDITS = baseCredits || credits;
     
     const config = window.CREDIT_CONFIG || {};
     
@@ -498,9 +559,10 @@ window.verifyPayment = function(transactionId, credits) {
     const config = window.CREDIT_CONFIG || {};
     const pricePerTen = config.pricePerTen || 1;
     const currency = config.currency || 'USD';
-    const price = (credits / 10) * pricePerTen;
+    const baseCredits = window.BASE_CREDITS || credits;
+    const price = (baseCredits / 10) * pricePerTen;
     
-    console.log('Verifying payment:', {transactionId, credits, currency, price});
+    console.log('Verifying payment:', {transactionId, credits, baseCredits, currency, price});
     fetch('/credits/verify-payment', {
         method: 'POST',
         headers: {
@@ -510,6 +572,7 @@ window.verifyPayment = function(transactionId, credits) {
         body: JSON.stringify({
             transaction_id: transactionId,
             credits: credits,
+            base_credits: baseCredits,
             currency: currency,
             price: price
         })
@@ -532,40 +595,292 @@ window.verifyPayment = function(transactionId, credits) {
     });
 };
 
-// Initialize custom price calculation on page load
-document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('customAmount')) {
-        window.calculateCustomPrice();
-    }
-});
+// ============================================
+// RENTAL CREDENTIALS VISIBILITY TOGGLE
+// ============================================
+// These functions manage credential display on rental details page
+// Full values are stored in data-* attributes to avoid embedding sensitive data in HTML
 
-window.markAsRead = function(notificationId) {
-    fetch(`/notifications/${notificationId}/read`, {
+/**
+ * Toggle Admin URL visibility
+ * Masks/unmasks URL by showing last 4 characters only when hidden
+ * Uses data-full-url attribute to store complete URL
+ */
+window.toggleAdminUrlVisibility = function() {
+    const display = document.getElementById('admin-url');
+    const eyeIcon = document.getElementById('admin-url-eye-icon');
+    const eyeSlashIcon = document.getElementById('admin-url-eye-slash-icon');
+    const fullUrl = display.getAttribute('data-full-url');
+    
+    if (display.textContent.includes('*')) {
+        display.textContent = fullUrl;
+        eyeIcon.classList.add('hidden');
+        eyeSlashIcon.classList.remove('hidden');
+    } else {
+        display.textContent = '*'.repeat(fullUrl.length - 4) + fullUrl.substring(fullUrl.length - 4);
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    }
+};
+
+/**
+ * Toggle Admin ID visibility
+ * Fully masks/unmasks ID (XXXXXXXXXXXXXXXX when hidden)
+ * Uses data-full-id attribute to store complete ID
+ */
+window.toggleAdminIdVisibility = function() {
+    const display = document.getElementById('admin-id-display');
+    const eyeIcon = document.getElementById('admin-id-eye-icon');
+    const eyeSlashIcon = document.getElementById('admin-id-eye-slash-icon');
+    const fullId = display.getAttribute('data-full-id');
+    
+    // Toggle between masked and full view
+    if (display.textContent.includes('...')) {
+        display.textContent = fullId;
+        eyeIcon.classList.add('hidden');
+        eyeSlashIcon.classList.remove('hidden');
+    } else {
+        display.textContent = fullId.substring(0, 4) + '...' + fullId.substring(fullId.length - 4);
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    }
+};
+
+/**
+ * Toggle Email visibility
+ * Fully masks/unmasks email (XXXXXXXXXXXXXXXX when hidden)
+ * Uses data-full-email attribute to store complete email
+ */
+window.toggleEmailVisibility = function() {
+    const display = document.getElementById('admin-email');
+    const eyeIcon = document.getElementById('email-eye-icon');
+    const eyeSlashIcon = document.getElementById('email-eye-slash-icon');
+    const fullEmail = display.getAttribute('data-full-email');
+    
+    // Toggle between masked and full view
+    if (display.textContent.includes('...')) {
+        display.textContent = fullEmail;
+        eyeIcon.classList.add('hidden');
+        eyeSlashIcon.classList.remove('hidden');
+    } else {
+        const atIndex = fullEmail.indexOf('@');
+        display.textContent = fullEmail.substring(0, 2) + '...' + fullEmail.substring(atIndex);
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    }
+};
+
+/**
+ * Toggle Password visibility
+ * Switches input type between 'password' and 'text'
+ */
+window.togglePasswordVisibility = function() {
+    const input = document.getElementById('admin-password');
+    const eyeIcon = document.getElementById('eye-icon');
+    const eyeSlashIcon = document.getElementById('eye-slash-icon');
+    
+    // Toggle input type
+    if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.classList.add('hidden');
+        eyeSlashIcon.classList.remove('hidden');
+    } else {
+        input.type = 'password';
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    }
+};
+
+/**
+ * Copy Admin ID to clipboard
+ * Retrieves full ID from data attribute and copies to clipboard
+ * Shows "Copied!" feedback for 1.5 seconds
+ */
+window.copyAdminId = function() {
+    const adminId = document.getElementById('admin-id-display').getAttribute('data-full-id');
+    navigator.clipboard.writeText(adminId).then(() => {
+        const element = document.getElementById('admin-id-display');
+        const originalText = element.textContent;
+        // Show feedback
+        element.textContent = 'Copied!';
+        element.classList.add('text-green-600');
+        // Restore original text after 1.5 seconds
+        setTimeout(() => {
+            element.textContent = originalText;
+            element.classList.remove('text-green-600');
+        }, 1500);
+    });
+};
+
+/**
+ * Copy credential to clipboard
+ * Handles copying from data attributes for masked fields
+ * @param {string} elementId - ID of element to copy from
+ */
+window.copyToClipboard = function(elementId) {
+    const element = document.getElementById(elementId);
+    let textToCopy = element.textContent;
+    
+    // For masked fields, get full value from data attribute
+    if (elementId === 'admin-url') {
+        textToCopy = element.getAttribute('data-full-url');
+    } else if (elementId === 'admin-email') {
+        textToCopy = element.getAttribute('data-full-email');
+    }
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = element.textContent;
+        // Show feedback
+        element.textContent = 'Copied!';
+        element.classList.add('text-green-600');
+        // Restore original text after 1.5 seconds
+        setTimeout(() => {
+            element.textContent = originalText;
+            element.classList.remove('text-green-600');
+        }, 1500);
+    });
+};
+
+/**
+ * Copy Password to clipboard
+ * Copies password value from input field
+ * Shows checkmark icon feedback for 1.5 seconds
+ */
+window.copyPassword = function() {
+    const input = document.getElementById('admin-password');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('copy-password-btn');
+        const originalHTML = btn.innerHTML;
+        // Show checkmark feedback
+        btn.innerHTML = '<svg class="w-3 h-3 sm:w-4 sm:h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+        // Restore original icon after 1.5 seconds
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+        }, 1500);
+    });
+};
+
+/**
+ * Refresh credentials from server
+ * Calls backend to regenerate admin credentials
+ * Updates email and admin URL display with new values
+ * Shows loading spinner and success/error message
+ */
+window.refreshCredentials = function() {
+    const btn = document.getElementById('refresh-btn');
+    const statusMsg = document.getElementById('status-message');
+    btn.disabled = true;
+    // Show loading spinner
+    btn.innerHTML = '<svg class="w-4 h-4 inline animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Loading...';
+
+    // Extract rental ID from URL path
+    const rentalId = window.location.pathname.split('/').pop();
+    // Call backend to refresh credentials
+    fetch(`/rentals/${rentalId}/update-credentials`, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Content-Type': 'application/json'
         }
-    }).then(() => location.reload());
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                // Update email display
+                document.getElementById('admin-email').textContent = data.data.email;
+                // Update admin URL if provided
+                if (data.data.admin_url) {
+                    const urlElement = document.getElementById('admin-url');
+                    urlElement.setAttribute('data-full-url', data.data.admin_url);
+                    urlElement.href = data.data.admin_url;
+                    urlElement.className = 'block font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border break-all text-blue-600 dark:text-blue-400 hover:underline';
+                }
+                // Show success message
+                statusMsg.textContent = '✓ Credentials updated successfully';
+                statusMsg.className = 'p-3 rounded text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+            } else {
+                // Show error message
+                statusMsg.textContent = '✗ Failed to update credentials';
+                statusMsg.className = 'p-3 rounded text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+            }
+        })
+        .catch(() => {
+            // Show error on network failure
+            statusMsg.textContent = '✗ An error occurred';
+            statusMsg.className = 'p-3 rounded text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        })
+        .finally(() => {
+            // Show message and restore button
+            statusMsg.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerHTML = '<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Refresh';
+            // Auto-hide message after 5 seconds
+            setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+        });
 };
 
-function openNotificationsSidebar() {
-    const sidebar = document.getElementById('notificationsSidebar');
-    const overlay = document.getElementById('notificationsSidebarOverlay');
-    sidebar.style.display = 'flex';
-    overlay.classList.remove('hidden');
-    setTimeout(() => {
-        sidebar.classList.remove('translate-x-full');
-        overlay.classList.add('opacity-100');
-    }, 10);
-}
 
-function closeNotificationsSidebar() {
-    const sidebar = document.getElementById('notificationsSidebar');
-    const overlay = document.getElementById('notificationsSidebarOverlay');
-    sidebar.classList.add('translate-x-full');
-    overlay.classList.add('hidden');
-    setTimeout(() => {
-        sidebar.style.display = 'none';
-    }, 300);
-}
+
+/**
+ * Toggle notifications sidebar
+ */
+window.toggleNotifications = function() {
+    const nav = document.querySelector('[x-data*="notificationsOpen"]');
+    if (nav && nav.__x) {
+        nav.__x.$data.notificationsOpen = !nav.__x.$data.notificationsOpen;
+    }
+};
+
+// ============================================
+// NOTIFICATION FUNCTIONS
+// ============================================
+
+/**
+ * Mark all notifications as read in database
+ */
+window.markAllAsReadNow = function() {
+    fetch('/notifications/read-all', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+};
+
+
+// ============================================
+// SCROLL-TRIGGERED ANIMATIONS
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize custom price on credits page
+    if (document.getElementById('customAmount')) {
+        calculateCustomPrice();
+    }
+    
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                const delay = (entry.target.dataset.animationDelay || 0) * 100;
+                setTimeout(() => {
+                    entry.target.classList.remove('opacity-0');
+                    const animationClass = entry.target.dataset.animation || 'animate-fade-in-up';
+                    entry.target.classList.add(animationClass);
+                }, delay);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('[data-animation]').forEach(el => observer.observe(el));
+});

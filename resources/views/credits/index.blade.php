@@ -33,7 +33,7 @@
                                 {{ $currencyData['symbol'] }}{{ number_format($package['price'], 2) }}
                             </div>
                             
-                            <button onclick="selectPackage({{ $package['credits'] }}, {{ $package['price'] }}, this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center">
+                            <button onclick="selectPackage({{ $package['credits'] + $package['bonus'] }}, {{ $package['price'] }}, this, {{ $package['credits'] }})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center">
                                 <span class="button-text">Purchase Now</span>
                                 <svg class="button-spinner hidden animate-spin h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -67,7 +67,7 @@
                         </div>
                         
                         <div id="customPrice" class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-6 break-words px-2">
-                            {{ $currencyData['symbol'] }}10.00
+                            {{ $currencyData['symbol'] }}{{ number_format((1000 / 10) * $currencyData['price_per_10'], 2) }}
                         </div>
                         
                         <button id="customButton" onclick="selectCustomPackage(this)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center">

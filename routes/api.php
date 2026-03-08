@@ -18,6 +18,8 @@ Route::post('/login', [CrossPlatformAuthController::class, 'login']);
 
 // Reseller Rental API
 Route::post('/rental/create', [RentalApiController::class, 'create']);
+Route::post('/rental/update-admin-url', [RentalApiController::class, 'updateAdminUrl']);
+Route::get('/rentals/{rental}', [RentalApiController::class, 'show'])->middleware('auth:sanctum');
 
 /**
  * Get authenticated user's wallet balance

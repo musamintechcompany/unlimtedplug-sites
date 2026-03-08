@@ -14,15 +14,18 @@ class Rental extends Model
     protected $fillable = [
         'user_id',
         'rentable_project_id',
-        'duration_days',
+        'duration_type',
+        'duration_value',
         'credits_cost',
         'rental_starts_at',
         'rental_expires_at',
         'renewal_history',
         'details_history',
+        'initial_details',
         'admin_id',
         'admin_email',
         'admin_password',
+        'admin_url',
         'status',
     ];
 
@@ -32,6 +35,7 @@ class Rental extends Model
         'rental_expires_at' => 'datetime',
         'renewal_history' => 'array',
         'details_history' => 'array',
+        'initial_details' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -57,5 +61,13 @@ class Rental extends Model
     public function isActive(): bool
     {
         return $this->status === 'active' && !$this->isExpired();
+    }
+
+    public function getTimeRemainingAttribute(): ?string
+    {
+        if ($this->isExpired()) {
+            return 'Expired';
+        }
+        return $this->rental_expires_at->diffForHumans();
     }
 }
