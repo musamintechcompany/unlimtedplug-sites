@@ -137,7 +137,7 @@ window.handleRenewClick = function(status, rentalId, projectId, durationValue, d
     if (status === 'active') {
         return; // Tooltip already shown via CSS
     }
-    if (status === 'on_hold') {
+    if (status === 'on_hold' || status === 'expired') {
         window.openRenewModal(rentalId, projectId, durationValue, durationType, originalCost, expiresAt, userBalance);
     }
 };
@@ -624,8 +624,30 @@ window.toggleAdminUrlVisibility = function() {
 };
 
 /**
+ * Toggle App URL visibility
+ * Shows/hides full URL
+ * Uses data-full-url attribute to store complete URL
+ */
+window.toggleAppUrlVisibility = function() {
+    const display = document.getElementById('app-url');
+    const eyeIcon = document.getElementById('app-url-eye-icon');
+    const eyeSlashIcon = document.getElementById('app-url-eye-slash-icon');
+    const fullUrl = display.getAttribute('data-full-url');
+    
+    if (display.textContent === fullUrl) {
+        display.textContent = fullUrl.substring(0, 4) + '*'.repeat(fullUrl.length - 8) + fullUrl.substring(fullUrl.length - 4);
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    } else {
+        display.textContent = fullUrl;
+        eyeIcon.classList.add('hidden');
+        eyeSlashIcon.classList.remove('hidden');
+    }
+};
+
+/**
  * Toggle Admin ID visibility
- * Fully masks/unmasks ID (XXXXXXXXXXXXXXXX when hidden)
+ * Shows/hides full ID
  * Uses data-full-id attribute to store complete ID
  */
 window.toggleAdminIdVisibility = function() {
@@ -635,20 +657,22 @@ window.toggleAdminIdVisibility = function() {
     const fullId = display.getAttribute('data-full-id');
     
     // Toggle between masked and full view
-    if (display.textContent.includes('...')) {
+    if (display.textContent === fullId) {
+        // Currently showing full ID, mask it
+        display.textContent = fullId.substring(0, 4) + '*'.repeat(fullId.length - 8) + fullId.substring(fullId.length - 4);
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    } else {
+        // Currently masked, show full ID
         display.textContent = fullId;
         eyeIcon.classList.add('hidden');
         eyeSlashIcon.classList.remove('hidden');
-    } else {
-        display.textContent = fullId.substring(0, 4) + '...' + fullId.substring(fullId.length - 4);
-        eyeIcon.classList.remove('hidden');
-        eyeSlashIcon.classList.add('hidden');
     }
 };
 
 /**
  * Toggle Email visibility
- * Fully masks/unmasks email (XXXXXXXXXXXXXXXX when hidden)
+ * Shows/hides full email
  * Uses data-full-email attribute to store complete email
  */
 window.toggleEmailVisibility = function() {
@@ -658,15 +682,16 @@ window.toggleEmailVisibility = function() {
     const fullEmail = display.getAttribute('data-full-email');
     
     // Toggle between masked and full view
-    if (display.textContent.includes('...')) {
+    if (display.textContent === fullEmail) {
+        // Currently showing full email, mask it
+        display.textContent = fullEmail.substring(0, 4) + '*'.repeat(fullEmail.length - 8) + fullEmail.substring(fullEmail.length - 4);
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    } else {
+        // Currently masked, show full email
         display.textContent = fullEmail;
         eyeIcon.classList.add('hidden');
         eyeSlashIcon.classList.remove('hidden');
-    } else {
-        const atIndex = fullEmail.indexOf('@');
-        display.textContent = fullEmail.substring(0, 2) + '...' + fullEmail.substring(atIndex);
-        eyeIcon.classList.remove('hidden');
-        eyeSlashIcon.classList.add('hidden');
     }
 };
 
@@ -722,7 +747,7 @@ window.copyToClipboard = function(elementId) {
     let textToCopy = element.textContent;
     
     // For masked fields, get full value from data attribute
-    if (elementId === 'admin-url') {
+    if (elementId === 'admin-url' || elementId === 'app-url') {
         textToCopy = element.getAttribute('data-full-url');
     } else if (elementId === 'admin-email') {
         textToCopy = element.getAttribute('data-full-email');
@@ -820,6 +845,33 @@ window.refreshCredentials = function() {
 };
 
 
+
+/**
+ * Toggle theme between light and dark mode
+ * Saves preference to database via AJAX
+ */
+window.toggleTheme = function() {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    
+    // Update HTML class immediately
+    if (isDark) {
+        html.classList.remove('dark');
+    } else {
+        html.classList.add('dark');
+    }
+    
+    // Save to database
+    fetch('/theme/update', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ theme: newTheme })
+    });
+};
 
 /**
  * Toggle notifications sidebar

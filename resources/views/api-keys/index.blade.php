@@ -18,6 +18,10 @@
                                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     <div class="flex flex-col space-y-3">
                                         <div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Name</p>
+                                            <p class="font-semibold text-gray-900 dark:text-gray-100">{{ $key->name }}</p>
+                                        </div>
+                                        <div>
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Key</p>
                                             <p class="font-mono text-xs break-all">{{ substr($key->key, 0, 10) }}...{{ substr($key->key, -10) }}</p>
                                         </div>

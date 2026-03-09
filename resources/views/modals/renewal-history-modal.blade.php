@@ -34,7 +34,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-600 dark:text-gray-400">Duration</p>
-                                <p class="font-medium text-gray-900 dark:text-white">{{ $rental->initial_details['duration_value'] }} {{ $rental->initial_details['duration_value'] === 1 ? substr($rental->initial_details['duration_type'], 0, -2) : $rental->initial_details['duration_type'] }}</p>
+                                <p class="font-medium text-gray-900 dark:text-white">{{ $rental->initial_details['duration_value'] }} {{ str_replace('ly', '', $rental->initial_details['duration_type']) }}{{ $rental->initial_details['duration_value'] !== 1 ? 's' : '' }}</p>
                             </div>
                             <div>
                                 <p class="text-gray-600 dark:text-gray-400">Cost</p>
@@ -69,7 +69,7 @@
                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                                     <div>
                                         <p class="text-gray-600 dark:text-gray-400 text-xs">Added</p>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ $renewal['quantity'] }} {{ $renewal['quantity'] === 1 ? substr($renewal['duration_type'], 0, -2) : $renewal['duration_type'] }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ $renewal['quantity'] }} {{ str_replace('ly', '', $renewal['duration_type']) }}{{ $renewal['quantity'] !== 1 ? 's' : '' }}</p>
                                     </div>
                                     <div>
                                         <p class="text-gray-600 dark:text-gray-400 text-xs">Cost</p>
@@ -94,6 +94,9 @@
             @endif
 
             <!-- Current Status -->
+            @php
+            $lastRenewal = $rental->renewal_history ? $rental->renewal_history[count($rental->renewal_history) - 1] : null;
+            @endphp
             <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4">
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-3">Current Status</h3>
                 <div class="grid grid-cols-2 gap-4 text-sm">
@@ -105,6 +108,12 @@
                         <p class="text-gray-600 dark:text-gray-400">Expires</p>
                         <p class="font-medium text-gray-900 dark:text-white">{{ $rental->rental_expires_at->format('M d, Y') }}</p>
                     </div>
+                    @if($lastRenewal)
+                    <div>
+                        <p class="text-gray-600 dark:text-gray-400">Last Renewed</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ \Carbon\Carbon::parse($lastRenewal['renewed_at'])->format('M d, Y H:i') }}</p>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

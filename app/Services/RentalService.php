@@ -76,6 +76,7 @@ class RentalService
             }
 
             $adminUrl = $response['data']['admin_url'] ?? ($project->api_url ? $project->api_url . '/admin' : null);
+            $appUrl = $response['data']['app_url'] ?? ($project->api_url ? $project->api_url : null);
             $rental = Rental::create([
                 'id' => $rentalId,
                 'user_id' => $user->id,
@@ -87,7 +88,9 @@ class RentalService
                     'duration_type' => $durationType,
                     'duration_value' => $durationValue,
                     'credits_cost' => $creditsCost,
-                    'rental_starts_at' => now()->toIso8601String()
+                    'rental_starts_at' => now()->toIso8601String(),
+                    'admin_url' => $adminUrl,
+                    'app_url' => $appUrl
                 ],
                 'rental_starts_at' => now(),
                 'rental_expires_at' => now()->addSeconds($durationSeconds),
@@ -95,6 +98,7 @@ class RentalService
                 'admin_email' => $response['data']['email'] ?? null,
                 'admin_password' => $response['data']['password'] ?? null,
                 'admin_url' => $adminUrl,
+                'app_url' => $appUrl,
                 'status' => 'active'
             ]);
 

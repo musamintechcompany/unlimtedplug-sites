@@ -111,7 +111,8 @@ class RentalController extends Controller
                 $data = $response->json()['data'];
                 $rental->update([
                     'admin_email' => $data['email'] ?? $rental->admin_email,
-                    'admin_url' => $data['admin_url'] ?? $rental->admin_url
+                    'admin_url' => $data['admin_url'] ?? $rental->admin_url,
+                    'app_url' => $data['app_url'] ?? $rental->app_url
                 ]);
                 return response()->json(['success' => true, 'data' => $data]);
             }

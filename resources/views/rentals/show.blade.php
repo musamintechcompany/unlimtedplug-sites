@@ -82,10 +82,36 @@
                         <div class="space-y-3">
                             <div id="status-message" class="hidden p-3 rounded text-sm font-medium"></div>
                             <div>
+                                <p class="text-xs sm:text-sm {{ $rental->status === 'expired' ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300' }} mb-1">App URL</p>
+                                <div class="flex gap-2">
+                                    <div class="flex-1 relative">
+                                        <p class="font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 break-all text-gray-900 dark:text-gray-100" id="app-url" data-full-url="{{ $rental->app_url }}">{{ $rental->app_url ? substr($rental->app_url, 0, 4) . str_repeat('*', strlen($rental->app_url) - 8) . substr($rental->app_url, -4) : 'Pending...' }}</p>
+                                        @if($rental->app_url)
+                                        <button type="button" onclick="toggleAppUrlVisibility()" id="toggle-app-url-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                                            <svg id="app-url-eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                            <svg id="app-url-eye-slash-icon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                            </svg>
+                                        </button>
+                                        @endif
+                                    </div>
+                                    @if($rental->app_url)
+                                    <button onclick="copyToClipboard('app-url')" class="px-2 sm:px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition flex-shrink-0">
+                                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                    @endif
+                                </div>
+                            </div>
+                            <div>
                                 <p class="text-xs sm:text-sm {{ $rental->status === 'expired' ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300' }} mb-1">Admin URL</p>
                                 <div class="flex gap-2">
                                     <div class="flex-1 relative">
-                                        <a href="{{ $rental->admin_url ? $rental->admin_url : '#' }}" target="_blank" class="block font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border break-all {{ $rental->admin_url ? ($rental->status === 'expired' ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400') . ' hover:underline' : 'text-gray-400' }}" id="admin-url" data-full-url="{{ $rental->admin_url }}">{{ $rental->admin_url ? str_repeat('*', strlen($rental->admin_url) - 4) . substr($rental->admin_url, -4) : 'Pending...' }}</a>
+                                        <p class="block font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 break-all text-gray-900 dark:text-gray-100" id="admin-url" data-full-url="{{ $rental->admin_url }}">{{ $rental->admin_url ? substr($rental->admin_url, 0, 4) . str_repeat('*', strlen($rental->admin_url) - 8) . substr($rental->admin_url, -4) : 'Pending...' }}</p>
                                         @if($rental->admin_url)
                                         <button type="button" onclick="toggleAdminUrlVisibility()" id="toggle-admin-url-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                                             <svg id="admin-url-eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +137,7 @@
                                 <p class="text-xs sm:text-sm {{ $rental->status === 'expired' ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300' }} mb-1">Admin ID</p>
                                 <div class="flex gap-2">
                                     <div class="flex-1 relative">
-                                        <p class="font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border break-all" id="admin-id-display" data-full-id="{{ $rental->admin_id }}">XXXXXXXXXXXXXXXX</p>
+                                        <p class="font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 break-all text-gray-900 dark:text-gray-100" id="admin-id-display" data-full-id="{{ $rental->admin_id }}">{{ substr($rental->admin_id, 0, 4) . str_repeat('*', strlen($rental->admin_id) - 8) . substr($rental->admin_id, -4) }}</p>
                                         <button type="button" onclick="toggleAdminIdVisibility()" id="toggle-admin-id-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                                             <svg id="admin-id-eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -133,7 +159,7 @@
                                 <p class="text-xs sm:text-sm {{ $rental->status === 'expired' ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300' }} mb-1">Email</p>
                                 <div class="flex gap-2">
                                     <div class="flex-1 relative">
-                                        <p class="font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border break-all" id="admin-email" data-full-email="{{ $rental->admin_email }}">XXXXXXXXXXXXXXXX</p>
+                                        <p class="font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 break-all text-gray-900 dark:text-gray-100" id="admin-email" data-full-email="{{ $rental->admin_email }}">{{ substr($rental->admin_email, 0, 4) . str_repeat('*', strlen($rental->admin_email) - 8) . substr($rental->admin_email, -4) }}</p>
                                         <button type="button" onclick="toggleEmailVisibility()" id="toggle-email-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                                             <svg id="email-eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -157,7 +183,7 @@
                                 <p class="text-xs sm:text-sm {{ $rental->status === 'on_hold' ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300' }} mb-1">Password</p>
                                 <div class="flex gap-2">
                                     <div class="flex-1 relative">
-                                        <input type="password" id="admin-password" value="{{ $rental->admin_password }}" class="w-full font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border pr-10" readonly>
+                                        <input type="password" id="admin-password" value="{{ $rental->admin_password }}" class="w-full font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 pr-10 text-gray-900 dark:text-gray-100" readonly>
                                         <button type="button" onclick="togglePasswordVisibility()" id="toggle-password-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                                             <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>

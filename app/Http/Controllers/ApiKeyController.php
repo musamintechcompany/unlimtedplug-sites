@@ -23,10 +23,10 @@ class ApiKeyController extends Controller
 
     public function store(Request $request)
     {
-        $key = ApiKey::create([
-            'id' => Str::uuid(),
-            'user_id' => auth()->id(),
-            'name' => 'API Key ' . now()->format('M j, Y g:i A'),
+        $request->validate(['name' => 'required|string|max:255']);
+        
+        $key = auth()->user()->apiKeys()->create([
+            'name' => $request->name,
             'key' => 'sk_' . Str::random(32),
             'status' => 'active'
         ]);

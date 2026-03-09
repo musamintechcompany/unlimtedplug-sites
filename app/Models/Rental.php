@@ -26,6 +26,7 @@ class Rental extends Model
         'admin_email',
         'admin_password',
         'admin_url',
+        'app_url',
         'status',
     ];
 

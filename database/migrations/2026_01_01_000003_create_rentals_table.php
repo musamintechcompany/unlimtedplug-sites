@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('admin_email');
             $table->string('admin_password')->nullable();
             $table->string('admin_url')->nullable();
+            $table->string('app_url')->nullable();
             
             // Status (use 'expired' instead of 'on_hold' for clarity)
             $table->string('status')->default('active');
