@@ -44,7 +44,7 @@ class ProjectAdminController extends Controller
             'pricing_365d' => 'required|numeric',
             'sort_order' => 'required|integer',
             'status' => 'required|in:active,inactive',
-            'is_buyable' => 'nullable|boolean',
+            'is_ownable' => 'nullable|boolean',
             'is_rentable' => 'nullable|boolean',
             'images' => 'nullable|array',
             'images.*' => 'image|max:5120',
@@ -60,7 +60,7 @@ class ProjectAdminController extends Controller
 
         $details = [
             'images' => $images,
-            'is_buyable' => $request->has('is_buyable'),
+            'is_ownable' => $request->has('is_ownable'),
             'is_rentable' => $request->has('is_rentable'),
         ];
 
@@ -122,7 +122,7 @@ class ProjectAdminController extends Controller
             'pricing_365d' => 'required|numeric',
             'sort_order' => 'required|integer',
             'status' => 'required|in:active,inactive',
-            'is_buyable' => 'nullable|boolean',
+            'is_ownable' => 'nullable|boolean',
             'is_rentable' => 'nullable|boolean',
             'images' => 'nullable|array',
             'images.*' => 'image|max:5120',
@@ -139,7 +139,7 @@ class ProjectAdminController extends Controller
         }
 
         $details['images'] = $images;
-        $details['is_buyable'] = $request->has('is_buyable');
+        $details['is_ownable'] = $request->has('is_ownable');
         $details['is_rentable'] = $request->has('is_rentable');
 
         $project->update([

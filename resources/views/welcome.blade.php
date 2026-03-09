@@ -31,10 +31,10 @@
             <div class="flex flex-col md:flex-row items-center gap-8">
                 <div class="md:w-1/2 mb-8 md:mb-0 animate-fade-in-up">
                     <h1 class="text-3xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
-                        Rent Professional Websites & Apps <span class="text-indigo-600 animate-gradient-text">In Minutes</span>
+                        Rent or Own Professional <span class="text-indigo-600 animate-gradient-text">Websites & Apps</span> — Launch in Minutes
                     </h1>
                     <p class="text-gray-600 text-base md:text-lg mb-6 md:mb-8 max-w-lg animate-fade-in-up" style="animation-delay: 0.1s">
-                        No coding required. Choose from our collection of stunning websites, web apps, mobile apps, and desktop apps to start your online presence today.
+                        No coding required. Choose from ready-made websites, web apps, mobile apps, and business systems. Customize to your brand and go live fast.
                     </p>
                     <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 animate-fade-in-up" style="animation-delay: 0.2s">
                         @guest
@@ -43,7 +43,7 @@
                             </a>
                         @endguest
                         <a href="{{ route('browse') }}" class="bg-white hover:bg-gray-100 text-gray-900 font-medium py-3 px-6 md:px-8 rounded-lg transition duration-300 border border-gray-300 shadow-sm text-center text-sm md:text-base">
-                            Browse Templates
+                            Browse
                         </a>
                     </div>
                 </div>
@@ -106,12 +106,14 @@
                         </div>
                         <script>
                             const messages = [
-                                'Go live instantly',
-                                '100% Secured',
-                                'No coding required',
-                                'Enterprise firewall',
-                                'Zero downtime',
-                                'Instant deployment'
+                                { text: 'Instant Setup', icon: '⚡' },
+                                { text: 'Secure Payments', icon: '🔒' },
+                                { text: 'Go live in minutes', icon: '🚀' },
+                                { text: 'Easy Customization', icon: '🎨' },
+                                { text: 'No coding needed', icon: '💻' },
+                                { text: 'Multi-currency support', icon: '💰' },
+                                { text: 'Professional templates', icon: '✨' },
+                                { text: 'Full control', icon: '🎯' }
                             ];
                             let index = 0;
                             setInterval(() => {
@@ -120,7 +122,7 @@
                                     el.style.opacity = '0';
                                     setTimeout(() => {
                                         index = (index + 1) % messages.length;
-                                        el.textContent = messages[index];
+                                        el.textContent = messages[index].icon + ' ' + messages[index].text;
                                         el.style.opacity = '1';
                                     }, 300);
                                 }
@@ -143,12 +145,14 @@
                         </div>
                         <script>
                             const messages2 = [
-                                'Bank-level encryption',
-                                'DDoS protection',
-                                'SSL certificates',
-                                'Daily backups',
-                                '99.9% uptime',
-                                'Advanced firewall'
+                                { text: 'Bank-level encryption', icon: '🔐' },
+                                { text: 'DDoS protection', icon: '🛡️' },
+                                { text: 'SSL certificates', icon: '🔒' },
+                                { text: 'Daily backups', icon: '💾' },
+                                { text: '99.9% uptime', icon: '⏱️' },
+                                { text: 'Advanced firewall', icon: '🚨' },
+                                { text: 'Data privacy', icon: '👁️' },
+                                { text: '24/7 monitoring', icon: '👀' }
                             ];
                             let index2 = 0;
                             setInterval(() => {
@@ -157,7 +161,7 @@
                                     el.style.opacity = '0';
                                     setTimeout(() => {
                                         index2 = (index2 + 1) % messages2.length;
-                                        el.textContent = messages2[index2];
+                                        el.textContent = messages2[index2].icon + ' ' + messages2[index2].text;
                                         el.style.opacity = '1';
                                     }, 300);
                                 }
@@ -445,13 +449,13 @@
                 <!-- Left Content -->
                 <div>
                     <div class="inline-block mb-4">
-                        <span class="text-indigo-300 text-sm font-semibold tracking-wider uppercase">Ready to launch?</span>
+                        <span class="text-indigo-300 text-sm font-semibold tracking-wider uppercase opacity-0" data-animation="animate-fade-in-up" data-animation-delay="0">Ready to launch?</span>
                     </div>
-                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">Transform Your Digital Presence <span class="bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">Today</span></h2>
-                    <p class="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg">Stop waiting. Start building. Join thousands of entrepreneurs who've already launched their online success with our professional, ready-to-use solutions.</p>
+                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight opacity-0" data-animation="animate-fade-in-up" data-animation-delay="1">Transform Your Digital Presence <span class="bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">Today</span></h2>
+                    <p class="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg opacity-0" data-animation="animate-fade-in-up" data-animation-delay="2">Stop waiting. Start building. Join thousands of entrepreneurs who've already launched their online success with our professional, ready-to-use solutions.</p>
                     
                     <!-- Quick Benefits -->
-                    <div class="grid grid-cols-2 gap-4 mb-10">
+                    <div class="grid grid-cols-2 gap-4 mb-10 opacity-0" data-animation="animate-fade-in-up" data-animation-delay="3">
                         <div class="flex items-start gap-3 group">
                             <div class="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mt-0.5 group-hover:scale-110 transition">
                                 <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -487,7 +491,7 @@
                     </div>
                     
                     <!-- CTA Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex flex-col sm:flex-row gap-4 opacity-0" data-animation="animate-fade-in-up" data-animation-delay="4">
                         @guest
                             <a href="{{ route('register') }}" class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-indigo-600 hover:to-blue-600 transition duration-300 text-center shadow-lg hover:shadow-2xl transform hover:-translate-y-1">
                                 Get Started Free
@@ -500,7 +504,7 @@
                 </div>
                 
                 <!-- Right Visual -->
-                <div class="hidden md:flex justify-center items-center">
+                <div class="hidden md:flex justify-center items-center opacity-0" data-animation="animate-fade-in-up" data-animation-delay="5">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="w-56 bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition duration-300 transform hover:scale-105">
                             <div class="flex items-center gap-3 mb-2">
@@ -559,4 +563,3 @@
             </div>
         </div>
     </section>
-</x-guest1-layout>

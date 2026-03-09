@@ -79,10 +79,10 @@
 
                     <!-- Action Buttons -->
                     <div class="space-y-3">
-                        <!-- Buy Button -->
-                        @if($project['is_buyable'] ?? false)
+                        <!-- Own Button -->
+                        @if($project['is_ownable'] ?? false)
                             <button onclick="window.projectShow.openBuyModal()" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                                Buy Now
+                                Own Now
                             </button>
                         @endif
                         

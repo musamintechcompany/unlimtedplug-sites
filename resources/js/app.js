@@ -909,6 +909,12 @@ window.markAllAsReadNow = function() {
 // ============================================
 // SCROLL-TRIGGERED ANIMATIONS
 // ============================================
+
+/**
+ * Initialize scroll-triggered animations for elements with data-animation attribute
+ * Supports staggered delays via data-animation-delay attribute
+ * Applies animation classes on scroll intersection
+ */
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize custom price on credits page
     if (document.getElementById('customAmount')) {

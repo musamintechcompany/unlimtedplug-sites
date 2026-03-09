@@ -27,7 +27,7 @@ class="bg-white/95 backdrop-blur-sm border-b border-gray-200 fixed top-0 w-full 
 
             <!-- Desktop Navigation -->
             <div class="hidden md:flex items-center gap-8">
-                <a href="{{ route('browse') }}" class="text-sm hover:text-indigo-600 {{ request()->routeIs('browse') ? 'font-medium text-indigo-600' : '' }}">Browse</a>
+                <a href="{{ route('browse') }}" class="text-sm hover:text-indigo-600 {{ request()->routeIs('browse') ? 'font-medium text-indigo-600' : '' }}">Browse Projects</a>
                 <a href="{{ route('how-it-works') }}" class="text-sm hover:text-indigo-600 {{ request()->routeIs('how-it-works') ? 'font-medium text-indigo-600' : '' }}">How It Works</a>
             </div>
 
@@ -102,7 +102,7 @@ class="bg-white/95 backdrop-blur-sm border-b border-gray-200 fixed top-0 w-full 
                 <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 6.707 6.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l4-4z"></path>
                 </svg>
-                Browse
+                Browse Projects
             </a>
             <a href="{{ route('how-it-works') }}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100 {{ request()->routeIs('how-it-works') ? 'bg-gray-100 border-r-4 border-indigo-500' : '' }}">
                 <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">

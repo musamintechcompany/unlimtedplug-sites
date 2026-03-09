@@ -3,8 +3,8 @@
     <section class="py-12 px-6">
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">Browse Rentals</h1>
-                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A]">Discover websites, web apps, mobile apps, and desktop apps ready to rent</p>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Browse Projects</h1>
+                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A]">Rent or own professional websites, apps, and digital solutions.</p>
             </div>
 
             <!-- Products Grid -->

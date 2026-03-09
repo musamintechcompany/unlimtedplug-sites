@@ -19,7 +19,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Browse Templates</h3>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Browse</h3>
                     <p class="text-xs md:text-sm text-gray-600">Explore 1000+ professional websites, web apps, mobile apps, and desktop apps</p>
                 </div>
 
@@ -305,7 +305,7 @@
                             </a>
                         @endguest
                         <a href="{{ route('browse') }}" class="bg-slate-800 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-semibold hover:bg-slate-700 transition duration-300 border border-slate-600 text-center shadow-lg hover:shadow-xl text-sm md:text-base">
-                            Explore Templates
+                            Browse
                         </a>
                     </div>
                 </div>
