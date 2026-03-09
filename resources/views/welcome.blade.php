@@ -43,7 +43,7 @@
                             </a>
                         @endguest
                         <a href="{{ route('browse') }}" class="bg-white hover:bg-gray-100 text-gray-900 font-medium py-3 px-6 md:px-8 rounded-lg transition duration-300 border border-gray-300 shadow-sm text-center text-sm md:text-base">
-                            Browse
+                            Browse Projects
                         </a>
                     </div>
                 </div>
@@ -498,7 +498,7 @@
                             </a>
                         @endguest
                         <a href="#templates" class="bg-slate-800 text-white px-8 py-4 rounded-xl font-semibold hover:bg-slate-700 transition duration-300 border border-slate-600 text-center shadow-lg hover:shadow-xl">
-                            Explore Templates
+                            Browse Projects
                         </a>
                     </div>
                 </div>
