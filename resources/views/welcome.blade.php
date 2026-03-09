@@ -449,13 +449,13 @@
                 <!-- Left Content -->
                 <div>
                     <div class="inline-block mb-4">
-                        <span class="text-indigo-300 text-sm font-semibold tracking-wider uppercase opacity-0" data-animation="animate-fade-in-up" data-animation-delay="0">Ready to launch?</span>
+                        <span class="text-indigo-300 text-sm font-semibold tracking-wider uppercase" data-animation="animate-fade-in-up" data-animation-delay="0">Ready to launch?</span>
                     </div>
-                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight opacity-0" data-animation="animate-fade-in-up" data-animation-delay="1">Transform Your Digital Presence <span class="bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">Today</span></h2>
-                    <p class="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg opacity-0" data-animation="animate-fade-in-up" data-animation-delay="2">Stop waiting. Start building. Join thousands of entrepreneurs who've already launched their online success with our professional, ready-to-use solutions.</p>
+                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" data-animation="animate-fade-in-up" data-animation-delay="1">Transform Your Digital Presence <span class="bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">Today</span></h2>
+                    <p class="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg" data-animation="animate-fade-in-up" data-animation-delay="2">Stop waiting. Start building. Join thousands of entrepreneurs who've already launched their online success with our professional, ready-to-use solutions.</p>
                     
                     <!-- Quick Benefits -->
-                    <div class="grid grid-cols-2 gap-4 mb-10 opacity-0" data-animation="animate-fade-in-up" data-animation-delay="3">
+                    <div class="grid grid-cols-2 gap-4 mb-10" data-animation="animate-fade-in-up" data-animation-delay="3">
                         <div class="flex items-start gap-3 group">
                             <div class="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mt-0.5 group-hover:scale-110 transition">
                                 <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -491,7 +491,7 @@
                     </div>
                     
                     <!-- CTA Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-4 opacity-0" data-animation="animate-fade-in-up" data-animation-delay="4">
+                    <div class="flex flex-col sm:flex-row gap-4" data-animation="animate-fade-in-up" data-animation-delay="4">
                         @guest
                             <a href="{{ route('register') }}" class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-indigo-600 hover:to-blue-600 transition duration-300 text-center shadow-lg hover:shadow-2xl transform hover:-translate-y-1">
                                 Get Started Free
@@ -504,7 +504,7 @@
                 </div>
                 
                 <!-- Right Visual -->
-                <div class="hidden md:flex justify-center items-center opacity-0" data-animation="animate-fade-in-up" data-animation-delay="5">
+                <div class="hidden md:flex justify-center items-center" data-animation="animate-fade-in-up" data-animation-delay="5">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="w-56 bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition duration-300 transform hover:scale-105">
                             <div class="flex items-center gap-3 mb-2">
@@ -563,3 +563,4 @@
             </div>
         </div>
     </section>
+</x-guest1-layout>
