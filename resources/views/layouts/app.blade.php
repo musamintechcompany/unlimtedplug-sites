@@ -45,5 +45,8 @@
                 {{ $slot }}
             </main>
         </div>
+
+        <!-- Include WhatsApp Welcome Modal -->
+        @include('modals.whatsapp-welcome')
     </body>
 </html>
