@@ -14,11 +14,20 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug');
             $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->string('created_by_type')->nullable(); // 'admin' or 'user'
+            $table->uuid('created_by_id')->nullable();
             $table->timestamps();
-            
+            $table->softDeletes();
+
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->unique(['category_id', 'slug']); // Unique slug within category
+            $table->index('category_id');
             $table->index('slug');
-            $table->unique(['category_id', 'slug']);
+            $table->index('is_active');
+            $table->index('sort_order');
+            $table->index('deleted_at');
         });
     }
 
