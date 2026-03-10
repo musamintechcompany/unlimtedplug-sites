@@ -46,23 +46,40 @@
                                 <!-- Description -->
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
-                                    <div id="description" style="height: 300px;" class="border border-gray-300 rounded-lg"></div>
+                                    <div id="description" style="height: 300px;"></div>
                                     <input type="hidden" name="description" id="description-input" value="{{ isset($project) ? $project->description : '' }}" required>
                                     @error('description') <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
-                                <!-- Type & API URL -->
+                                <!-- Category & Subcategory -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div>
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Type *</label>
-                                        <input type="text" name="type" value="{{ $project->type ?? '' }}" placeholder="e.g., shipping, ecommerce" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('type') border-red-500 @enderror">
-                                        @error('type') <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                                        <select name="category_id" id="categorySelect" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('category_id') border-red-500 @enderror">
+                                            <option value="">Select a category</option>
+                                            @foreach($categories ?? [] as $category)
+                                                <option value="{{ $category->id }}" {{ (isset($project) && $project->category_id === $category->id) ? 'selected' : '' }}>{{ $category->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('category_id') <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">API URL *</label>
-                                        <input type="text" name="api_url" value="{{ $project->api_url ?? '' }}" placeholder="https://api.example.com" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('api_url') border-red-500 @enderror">
-                                        @error('api_url') <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span> @enderror
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Subcategory *</label>
+                                        <select name="subcategory_id" id="subcategorySelect" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('subcategory_id') border-red-500 @enderror">
+                                            <option value="">Select a subcategory</option>
+                                            @if(isset($project) && $project->subcategory)
+                                                <option value="{{ $project->subcategory->id }}" selected>{{ $project->subcategory->name }}</option>
+                                            @endif
+                                        </select>
+                                        @error('subcategory_id') <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span> @enderror
                                     </div>
+                                </div>
+
+                                <!-- API URL -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">API URL *</label>
+                                    <input type="text" name="api_url" value="{{ $project->api_url ?? '' }}" placeholder="https://api.example.com" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('api_url') border-red-500 @enderror">
+                                    @error('api_url') <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
@@ -104,39 +121,47 @@
                                 Project Images
                             </h2>
                             
-                            <!-- Existing Images (Edit Mode) -->
-                            @if(isset($project) && $project->details)
-                                @php
-                                    $details = json_decode($project->details, true) ?? [];
-                                    $existingImages = $details['images'] ?? [];
-                                @endphp
-                                @if(count($existingImages) > 0)
-                                    <div class="mb-6">
-                                        <p class="text-sm font-semibold text-gray-700 mb-3">Existing Images</p>
-                                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                            @foreach($existingImages as $image)
-                                                <div class="relative group">
-                                                    <img src="{{ asset($image) }}" class="w-full h-24 object-cover rounded-lg">
-                                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                                                        <span class="text-white text-xs font-medium">Existing</span>
-                                                    </div>
+                            <!-- Banner Image -->
+                            <div class="mb-8">
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">Banner Image</label>
+                                <div id="bannerPreviewContainer" class="mb-3 relative group" style="{{ (isset($project) && $project->banner_image) ? '' : 'display:none;' }}">
+                                    <img id="bannerPreviewImg" src="{{ isset($project) && $project->banner_image ? asset($project->banner_image) : '' }}" class="w-full h-32 object-cover rounded-lg">
+                                    <button type="button" onclick="document.getElementById('bannerDeleteInput').value='1'; document.getElementById('bannerPreviewContainer').style.display='none';" class="absolute top-2 right-2 bg-red-600 text-white p-2 rounded opacity-0 group-hover:opacity-100 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="bannerDeleteInput" name="delete_banner" value="0">
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition" id="bannerDropZone">
+                                    <input type="file" name="banner_image" accept="image/*" class="hidden" id="bannerInput">
+                                    <svg class="mx-auto h-10 w-10 text-gray-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 12M9 20l3.172-3.172a4 4 0 015.656 0L28 20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    <p class="text-gray-700 font-medium">{{ isset($project) && $project->banner_image ? 'Change banner image' : 'Upload banner image' }}</p>
+                                    <p class="text-gray-500 text-sm mt-1">PNG, JPG up to 5MB</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Media Images -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">Media Images</label>
+                                @if(isset($project) && $project->media_images)
+                                    <div class="mb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="existingMediaPreview">
+                                        @foreach($project->media_images as $index => $image)
+                                            <div class="relative group" draggable="true" data-index="{{ $index }}">
+                                                <img src="{{ asset($image) }}" class="w-full h-24 object-cover rounded-lg cursor-move">
+                                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                                    <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-white text-xs font-medium">Remove</button>
                                                 </div>
-                                            @endforeach
-                                        </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 @endif
-                            @endif
-                            
-                            <!-- Upload New Images -->
-                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition" id="dropZone">
-                                <input type="file" name="images[]" multiple accept="image/*" class="hidden" id="imageInput">
-                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 12M9 20l3.172-3.172a4 4 0 015.656 0L28 20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                </svg>
-                                <p class="text-gray-700 font-medium">{{ isset($project) ? 'Add more images' : 'Drag images here or click to select' }}</p>
-                                <p class="text-gray-500 text-sm mt-1">PNG, JPG, GIF up to 5MB each</p>
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition" id="mediaDropZone">
+                                    <input type="file" name="media_images[]" multiple accept="image/*" class="hidden" id="mediaInput">
+                                    <svg class="mx-auto h-10 w-10 text-gray-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 12M9 20l3.172-3.172a4 4 0 015.656 0L28 20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    <p class="text-gray-700 font-medium">Add media images</p>
+                                    <p class="text-gray-500 text-sm mt-1">Drag to reorder, PNG, JPG up to 5MB each</p>
+                                </div>
+                                <div id="mediaPreview" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
                             </div>
-                            <div id="imagePreview" class="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
                         </div>
 
                         <!-- Sort Order Section -->
@@ -160,14 +185,14 @@
                                 Availability
                             </h2>
                             <div class="space-y-4">
-                                <!-- Ownable Toggle -->
+                                <!-- Buyable Toggle -->
                                 <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                                     <div>
-                                        <p class="font-medium text-gray-900">Enable Ownership</p>
-                                        <p class="text-sm text-gray-500">Allow users to own this project</p>
+                                        <p class="font-medium text-gray-900">Enable Purchase</p>
+                                        <p class="text-sm text-gray-500">Allow users to buy this project</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" name="is_ownable" value="1" {{ (isset($project) && $project->details ? json_decode($project->details, true)['is_ownable'] ?? false : false) ? 'checked' : '' }} class="sr-only peer">
+                                        <input type="checkbox" name="is_buyable" value="1" {{ (isset($project) && $project->is_buyable) ? 'checked' : '' }} class="sr-only peer">
                                         <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                     </label>
                                 </div>
@@ -179,7 +204,7 @@
                                         <p class="text-sm text-gray-500">Allow users to rent this project</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" name="is_rentable" value="1" {{ (isset($project) && $project->details ? json_decode($project->details, true)['is_rentable'] ?? false : false) ? 'checked' : '' }} class="sr-only peer">
+                                        <input type="checkbox" name="is_rentable" value="1" {{ (isset($project) && $project->is_rentable) ? 'checked' : '' }} class="sr-only peer">
                                         <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                     </label>
                                 </div>
@@ -221,4 +246,117 @@
 
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        // Banner image upload
+        const bannerDropZone = document.getElementById('bannerDropZone');
+        const bannerInput = document.getElementById('bannerInput');
+        bannerDropZone.addEventListener('click', () => bannerInput.click());
+        bannerDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            bannerDropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+        });
+        bannerDropZone.addEventListener('dragleave', () => {
+            bannerDropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+        });
+        bannerDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            bannerDropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+            bannerInput.files = e.dataTransfer.files;
+            previewBannerImage();
+        });
+        bannerInput.addEventListener('change', previewBannerImage);
+        
+        function previewBannerImage() {
+            if (bannerInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('bannerPreviewImg').src = e.target.result;
+                    document.getElementById('bannerPreviewContainer').style.display = '';
+                    document.getElementById('bannerDeleteInput').value = '0';
+                };
+                reader.readAsDataURL(bannerInput.files[0]);
+            }
+        }
+
+        // Media images upload and drag-reorder
+        const mediaDropZone = document.getElementById('mediaDropZone');
+        const mediaInput = document.getElementById('mediaInput');
+        const mediaPreview = document.getElementById('mediaPreview');
+        let draggedElement = null;
+
+        mediaDropZone.addEventListener('click', () => mediaInput.click());
+        mediaDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            mediaDropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+        });
+        mediaDropZone.addEventListener('dragleave', () => {
+            mediaDropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+        });
+        mediaDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            mediaDropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+            mediaInput.files = e.dataTransfer.files;
+            previewMediaImages();
+        });
+
+        mediaInput.addEventListener('change', previewMediaImages);
+
+        function previewMediaImages() {
+            mediaPreview.innerHTML = '';
+            Array.from(mediaInput.files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative group';
+                    div.draggable = true;
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-24 object-cover rounded-lg cursor-move">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-white text-xs font-medium">Remove</button>
+                        </div>
+                    `;
+                    div.addEventListener('dragstart', () => draggedElement = div);
+                    div.addEventListener('dragover', (e) => e.preventDefault());
+                    div.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (draggedElement !== div) {
+                            mediaPreview.insertBefore(draggedElement, div);
+                        }
+                    });
+                    mediaPreview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Category/Subcategory dropdown
+        document.getElementById('categorySelect').addEventListener('change', async (e) => {
+            const categoryId = e.target.value;
+            const subcategorySelect = document.getElementById('subcategorySelect');
+            subcategorySelect.innerHTML = '<option value="">Select a subcategory</option>';
+            if (categoryId) {
+                const response = await fetch(`/api/categories/${categoryId}/subcategories`);
+                const subcategories = await response.json();
+                subcategories.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub.id;
+                    option.textContent = sub.name;
+                    subcategorySelect.appendChild(option);
+                });
+            }
+        });
+
+        // Quill editor
+        const quill = new Quill('#description', {
+            theme: 'snow',
+            modules: {
+                toolbar: [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']]
+            }
+        });
+        const descInput = document.getElementById('description-input');
+        if (descInput.value) quill.root.innerHTML = descInput.value;
+        document.querySelector('form').addEventListener('submit', () => {
+            descInput.value = quill.root.innerHTML;
+        });
+    </script>
 </x-guest-layout>

@@ -28,14 +28,19 @@
                     <!-- Images Card -->
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
                         @php
-                            $details = json_decode($project->details, true) ?? [];
-                            $images = $details['images'] ?? [];
+                            $mediaImages = $project->media_images ?? [];
+                            $allImages = array_filter(array_merge(
+                                $project->banner_image ? [$project->banner_image] : [],
+                                $mediaImages
+                            ));
                         @endphp
                         
                         <!-- Main Image -->
                         <div class="bg-gray-100 aspect-video flex items-center justify-center">
-                            @if(count($images) > 0)
-                                <img id="mainImage" src="{{ asset($images[0]) }}" alt="{{ $project->name }}" class="w-full h-full object-cover">
+                            @if($project->banner_image)
+                                <img id="mainImage" src="{{ asset($project->banner_image) }}" alt="{{ $project->name }}" class="w-full h-full object-cover">
+                            @elseif(count($mediaImages) > 0)
+                                <img id="mainImage" src="{{ asset($mediaImages[0]) }}" alt="{{ $project->name }}" class="w-full h-full object-cover">
                             @else
                                 <div class="text-center">
                                     <svg class="w-16 h-16 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -45,10 +50,13 @@
                         </div>
                         
                         <!-- Thumbnails -->
-                        @if(count($images) > 1)
+                        @if(count($allImages) > 1)
                             <div class="p-4 bg-white border-t flex gap-2 overflow-x-auto">
-                                @foreach($images as $index => $image)
-                                    <img src="{{ asset($image) }}" alt="Thumbnail {{ $index + 1 }}" class="w-20 h-20 object-cover rounded-lg cursor-pointer flex-shrink-0 hover:ring-2 hover:ring-indigo-500 transition {{ $index === 0 ? 'ring-2 ring-indigo-500' : '' }}" onclick="changeImage('{{ asset($image) }}', this)">
+                                @if($project->banner_image)
+                                    <img src="{{ asset($project->banner_image) }}" alt="Banner" class="w-20 h-20 object-cover rounded-lg cursor-pointer flex-shrink-0 hover:ring-2 hover:ring-indigo-500 transition ring-2 ring-indigo-500" onclick="changeImage('{{ asset($project->banner_image) }}', this)">
+                                @endif
+                                @foreach($mediaImages as $index => $image)
+                                    <img src="{{ asset($image) }}" alt="Thumbnail {{ $index + 1 }}" class="w-20 h-20 object-cover rounded-lg cursor-pointer flex-shrink-0 hover:ring-2 hover:ring-indigo-500 transition" onclick="changeImage('{{ asset($image) }}', this)">
                                 @endforeach
                             </div>
                         @endif
@@ -57,7 +65,7 @@
                     <!-- Description Card -->
                     <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
                         <h2 class="text-lg font-semibold text-gray-900 mb-4">Description</h2>
-                        <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ $project->description }}</p>
+                        <div class="text-gray-700 leading-relaxed prose-content">{!! $project->description !!}</div>
                     </div>
                 </div>
 
@@ -84,9 +92,15 @@
                         <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Project Info</h3>
                         <div class="space-y-4">
                             <div>
-                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Type</p>
-                                <p class="text-gray-900 font-medium">{{ $project->type }}</p>
+                                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Category</p>
+                                <p class="text-gray-900 font-medium">{{ $project->category?->name ?? 'Uncategorized' }}</p>
                             </div>
+                            @if($project->subcategory)
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Subcategory</p>
+                                    <p class="text-gray-900 font-medium">{{ $project->subcategory->name }}</p>
+                                </div>
+                            @endif
                             <div>
                                 <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">API URL</p>
                                 <p class="text-gray-900 font-medium break-all text-sm">{{ $project->api_url }}</p>
@@ -104,14 +118,14 @@
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <span class="text-gray-600">Buyable</span>
-                                <span class="px-3 py-1 rounded-full text-sm font-medium {{ $details['is_buyable'] ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                    {{ $details['is_buyable'] ? '✓ Yes' : '✗ No' }}
+                                <span class="px-3 py-1 rounded-full text-sm font-medium {{ $project->is_buyable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                    {{ $project->is_buyable ? '✓ Yes' : '✗ No' }}
                                 </span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-gray-600">Rentable</span>
-                                <span class="px-3 py-1 rounded-full text-sm font-medium {{ $details['is_rentable'] ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                    {{ $details['is_rentable'] ? '✓ Yes' : '✗ No' }}
+                                <span class="px-3 py-1 rounded-full text-sm font-medium {{ $project->is_rentable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                    {{ $project->is_rentable ? '✓ Yes' : '✗ No' }}
                                 </span>
                             </div>
                         </div>
@@ -154,7 +168,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-500">Images</p>
-                                <p class="text-gray-900 font-medium">{{ count($images) }}</p>
+                                <p class="text-gray-900 font-medium">{{ count($allImages) }}</p>
                             </div>
                         </div>
                     </div>

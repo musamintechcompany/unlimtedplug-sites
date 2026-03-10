@@ -9,6 +9,7 @@ use App\Http\Controllers\RentalController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Api\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -54,28 +55,32 @@ Route::get('/product/{id}', function ($id) {
 
 Route::get('/projects/{id}', function ($id) {
     $project = \App\Models\RentableProject::where('id', $id)->where('status', 'active')->firstOrFail();
-    $details = json_decode($project->details, true) ?? [];
+    $images = $project->media_images ?? [];
     
     return view('projects.show', [
         'project' => [
             'id' => $project->id,
             'name' => $project->name,
-            'type' => $project->type,
-            'category' => $project->type,
+            'category' => $project->category?->name,
+            'subcategory' => $project->subcategory?->name,
             'description' => $project->description,
-            'is_buyable' => $details['is_buyable'] ?? false,
-            'is_rentable' => $details['is_rentable'] ?? false,
+            'is_buyable' => $project->is_buyable,
+            'is_rentable' => $project->is_rentable,
             'pricing_24h' => $project->pricing_24h,
             'pricing_7d' => $project->pricing_7d,
             'pricing_30d' => $project->pricing_30d,
             'pricing_365d' => $project->pricing_365d,
-            'images' => $details['images'] ?? [],
+            'banner_image' => $project->banner_image,
+            'images' => $images,
         ]
     ]);
 })->name('projects.show');
 
 // Auto-login from Marketplace
 Route::get('/auto-login', [AutoLoginController::class, 'autoLogin'])->name('auto-login');
+
+// API Routes
+Route::get('/api/categories/{categoryId}/subcategories', [CategoryController::class, 'subcategories'])->name('api.categories.subcategories');
 
 Route::get('/dashboard', function () {
     $activeRentals = \App\Models\Rental::with('rentableProject')

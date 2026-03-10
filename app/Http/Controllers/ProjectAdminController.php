@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RentableProject;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -24,7 +25,8 @@ class ProjectAdminController extends Controller
             return redirect()->route('admin.projects.login');
         }
 
-        return view('admin.projects.create');
+        $categories = Category::all();
+        return view('admin.projects.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -36,7 +38,8 @@ class ProjectAdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string',
             'description' => 'required|string',
-            'type' => 'required|string',
+            'category_id' => 'required|uuid|exists:categories,id',
+            'subcategory_id' => 'required|uuid|exists:subcategories,id',
             'api_url' => 'required|string',
             'pricing_24h' => 'required|numeric',
             'pricing_7d' => 'required|numeric',
@@ -44,32 +47,34 @@ class ProjectAdminController extends Controller
             'pricing_365d' => 'required|numeric',
             'sort_order' => 'required|integer',
             'status' => 'required|in:active,inactive',
-            'is_ownable' => 'nullable|boolean',
+            'is_buyable' => 'nullable|boolean',
             'is_rentable' => 'nullable|boolean',
-            'images' => 'nullable|array',
-            'images.*' => 'image|max:5120',
+            'banner_image' => 'nullable|image|max:5120',
+            'media_images' => 'nullable|array',
+            'media_images.*' => 'image|max:5120',
         ]);
 
-        $images = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('projects', 'public');
-                $images[] = 'storage/' . $path;
+        $bannerImage = null;
+        if ($request->hasFile('banner_image')) {
+            $bannerImage = 'storage/' . $request->file('banner_image')->store('projects', 'public');
+        }
+
+        $mediaImages = [];
+        if ($request->hasFile('media_images')) {
+            foreach ($request->file('media_images') as $image) {
+                $mediaImages[] = 'storage/' . $image->store('projects', 'public');
             }
         }
 
-        $details = [
-            'images' => $images,
-            'is_ownable' => $request->has('is_ownable'),
-            'is_rentable' => $request->has('is_rentable'),
-        ];
+        $details = [];
 
         RentableProject::create([
             'id' => Str::uuid(),
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'description' => $validated['description'],
-            'type' => $validated['type'],
+            'category_id' => $validated['category_id'],
+            'subcategory_id' => $validated['subcategory_id'],
             'api_url' => $validated['api_url'],
             'pricing_24h' => $validated['pricing_24h'],
             'pricing_7d' => $validated['pricing_7d'],
@@ -77,6 +82,10 @@ class ProjectAdminController extends Controller
             'pricing_365d' => $validated['pricing_365d'],
             'sort_order' => $validated['sort_order'],
             'status' => $validated['status'],
+            'banner_image' => $bannerImage,
+            'media_images' => $mediaImages,
+            'is_buyable' => $request->boolean('is_buyable'),
+            'is_rentable' => $request->boolean('is_rentable'),
             'details' => json_encode($details),
         ]);
 
@@ -100,7 +109,8 @@ class ProjectAdminController extends Controller
         }
 
         $project = RentableProject::findOrFail($id);
-        return view('admin.projects.create', compact('project'));
+        $categories = Category::all();
+        return view('admin.projects.create', compact('project', 'categories'));
     }
 
     public function update(Request $request, $id)
@@ -114,7 +124,8 @@ class ProjectAdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string',
             'description' => 'required|string',
-            'type' => 'required|string',
+            'category_id' => 'required|uuid|exists:categories,id',
+            'subcategory_id' => 'required|uuid|exists:subcategories,id',
             'api_url' => 'required|string',
             'pricing_24h' => 'required|numeric',
             'pricing_7d' => 'required|numeric',
@@ -122,31 +133,35 @@ class ProjectAdminController extends Controller
             'pricing_365d' => 'required|numeric',
             'sort_order' => 'required|integer',
             'status' => 'required|in:active,inactive',
-            'is_ownable' => 'nullable|boolean',
+            'is_buyable' => 'nullable|boolean',
             'is_rentable' => 'nullable|boolean',
-            'images' => 'nullable|array',
-            'images.*' => 'image|max:5120',
+            'banner_image' => 'nullable|image|max:5120',
+            'media_images' => 'nullable|array',
+            'media_images.*' => 'image|max:5120',
         ]);
 
-        $details = json_decode($project->details, true) ?? [];
-        $images = $details['images'] ?? [];
-        
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('projects', 'public');
-                $images[] = 'storage/' . $path;
+        $bannerImage = $project->banner_image;
+        if ($request->boolean('delete_banner')) {
+            $bannerImage = null;
+        } elseif ($request->hasFile('banner_image')) {
+            $bannerImage = 'storage/' . $request->file('banner_image')->store('projects', 'public');
+        }
+
+        $mediaImages = $project->media_images ?? [];
+        if ($request->hasFile('media_images')) {
+            foreach ($request->file('media_images') as $image) {
+                $mediaImages[] = 'storage/' . $image->store('projects', 'public');
             }
         }
 
-        $details['images'] = $images;
-        $details['is_ownable'] = $request->has('is_ownable');
-        $details['is_rentable'] = $request->has('is_rentable');
+        $details = [];
 
         $project->update([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'description' => $validated['description'],
-            'type' => $validated['type'],
+            'category_id' => $validated['category_id'],
+            'subcategory_id' => $validated['subcategory_id'],
             'api_url' => $validated['api_url'],
             'pricing_24h' => $validated['pricing_24h'],
             'pricing_7d' => $validated['pricing_7d'],
@@ -154,6 +169,10 @@ class ProjectAdminController extends Controller
             'pricing_365d' => $validated['pricing_365d'],
             'sort_order' => $validated['sort_order'],
             'status' => $validated['status'],
+            'banner_image' => $bannerImage,
+            'media_images' => $mediaImages,
+            'is_buyable' => $request->boolean('is_buyable'),
+            'is_rentable' => $request->boolean('is_rentable'),
             'details' => json_encode($details),
         ]);
 

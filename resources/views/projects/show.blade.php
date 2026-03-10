@@ -37,8 +37,14 @@
                 <div class="hidden lg:block lg:col-span-1">
                     <div class="sticky top-4">
                         <div class="max-h-96 overflow-y-auto overflow-x-hidden space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                            @if($project['banner_image'])
+                                <div class="w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 ring-2 ring-blue-500" 
+                                     onclick="window.projectShow.changeMainImage('{{ asset($project['banner_image']) }}', this)">
+                                    <img src="{{ asset($project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
+                                </div>
+                            @endif
                             @foreach($project['images'] as $index => $image)
-                                <div class="w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 {{ $index === 0 ? 'ring-2 ring-blue-500' : '' }}" 
+                                <div class="w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500" 
                                      onclick="window.projectShow.changeMainImage('{{ asset($image) }}', this)">
                                     <img src="{{ asset($image) }}" alt="{{ $project['name'] }} - Image {{ $index + 1 }}" class="w-full h-full object-cover">
                                 </div>
@@ -51,15 +57,21 @@
                 <div class="lg:col-span-6">
                     <div class="sticky top-4">
                         <div class="aspect-square bg-white rounded-lg overflow-hidden shadow-sm border" id="main-media-container">
-                            <img id="mainImage" src="{{ asset($project['images'][0]) }}" alt="{{ $project['name'] }}" class="w-full h-full object-cover cursor-pointer" onclick="window.projectShow.openFullscreen()">
+                            <img id="mainImage" src="{{ asset($project['banner_image'] ?? ($project['images'][0] ?? '')) }}" alt="{{ $project['name'] }}" class="w-full h-full object-cover cursor-pointer" onclick="window.projectShow.openFullscreen()">
                         </div>
                         
                         <!-- Mobile: Horizontal Thumbnails (Below main image) -->
                         <div class="lg:hidden mt-4">
                             <div class="overflow-x-auto scrollbar-hide">
                                 <div class="flex gap-2 pb-2" style="min-width: max-content;">
+                                    @if($project['banner_image'])
+                                        <div class="flex-shrink-0 w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 ring-2 ring-blue-500" 
+                                             onclick="window.projectShow.changeMainImage('{{ asset($project['banner_image']) }}', this)">
+                                            <img src="{{ asset($project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
+                                        </div>
+                                    @endif
                                     @foreach($project['images'] as $index => $image)
-                                        <div class="flex-shrink-0 w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 {{ $index === 0 ? 'ring-2 ring-blue-500' : '' }}" 
+                                        <div class="flex-shrink-0 w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500" 
                                              onclick="window.projectShow.changeMainImage('{{ asset($image) }}', this)">
                                             <img src="{{ asset($image) }}" alt="{{ $project['name'] }} - Image {{ $index + 1 }}" class="w-full h-full object-cover">
                                         </div>
@@ -79,19 +91,24 @@
 
                     <!-- Action Buttons -->
                     <div class="space-y-3">
-                        <!-- Own Button -->
-                        @if($project['is_ownable'] ?? false)
+                        <!-- Buy Button -->
+                        @if($project['is_buyable'] ?? false)
                             <button onclick="window.projectShow.openBuyModal()" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                                Own Now
+                                Buy Now
                             </button>
                         @endif
                         
                         <!-- Rent Button -->
                         @if($project['is_rentable'] ?? false)
-                            <button onclick="openRentModal()" class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                            <button onclick="window.projectShow.openRentModal()" class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors">
                                 Rent Now
                             </button>
                         @endif
+                        
+                        <!-- Share Button -->
+                        <button onclick="window.projectShow.openShareModal()" class="w-full bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors">
+                            Share
+                        </button>
                     </div>
 
                     <!-- Collapsible Sections -->
@@ -119,14 +136,18 @@
                             </button>
                             <div id="details-content" class="px-4 pb-4">
                                 <dl class="grid grid-cols-1 gap-4">
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Category</dt>
-                                        <dd class="text-sm text-gray-900">{{ $project['category'] }}</dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Type</dt>
-                                        <dd class="text-sm text-gray-900">{{ $project['type'] }}</dd>
-                                    </div>
+                                    @if($project['category'])
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500">Category</dt>
+                                            <dd class="text-sm text-gray-900">{{ $project['category'] }}</dd>
+                                        </div>
+                                    @endif
+                                    @if($project['subcategory'])
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500">Subcategory</dt>
+                                            <dd class="text-sm text-gray-900">{{ $project['subcategory'] }}</dd>
+                                        </div>
+                                    @endif
                                     <div>
                                         <dt class="text-sm font-medium text-gray-500">Status</dt>
                                         <dd class="text-sm text-gray-900">
@@ -167,29 +188,15 @@
     <!-- Include Modals -->
     @include('modals.buy-modal')
     @include('modals.rent-modal')
-
+    @include('modals.share-modal')
+    
     <script>
         window.projectId = '{{ $project['id'] }}';
         window.projectPricing = {
             daily: {{ $project['pricing_24h'] ?? 10 }},
-            weekly: {{ ($project['pricing_7d'] ?? 60) }},
-            monthly: {{ ($project['pricing_30d'] ?? 200) }},
-            yearly: {{ ($project['pricing_365d'] ?? 2000) }}
+            weekly: {{ $project['pricing_7d'] ?? 60 }},
+            monthly: {{ $project['pricing_30d'] ?? 200 }},
+            yearly: {{ $project['pricing_365d'] ?? 2000 }}
         };
-        
-        function openRentModal() {
-            document.body.style.overflow = 'hidden';
-            document.getElementById('rental-duration-modal').classList.remove('hidden');
-        }
-        
-        function closeRentModal() {
-            document.body.style.overflow = '';
-            document.getElementById('rental-options-modal').classList.add('hidden');
-        }
-        
-        function closeRentDurationModal() {
-            document.body.style.overflow = '';
-            document.getElementById('rental-duration-modal').classList.add('hidden');
-        }
     </script>
 </x-guest1-layout>

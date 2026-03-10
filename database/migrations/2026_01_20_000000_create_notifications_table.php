@@ -17,6 +17,10 @@ return new class extends Migration
             $table->json('data')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
+            
+            $table->index('type');
+            $table->index('read_at');
+            $table->index('created_at');
         });
     }
 

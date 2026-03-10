@@ -63,17 +63,17 @@ function toggleSection(sectionId) {
 }
 
 function openBuyModal() {
-    document.getElementById('purchase-options-modal').classList.remove('hidden');
+    document.getElementById('buy-options-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
 
 function closeBuyModal() {
-    document.getElementById('purchase-options-modal').classList.add('hidden');
+    document.getElementById('buy-options-modal').classList.add('hidden');
     document.body.style.overflow = '';
 }
 
 function openRentModal(pricing) {
-    window.projectPricing = pricing;
+    window.projectPricing = pricing || window.projectPricing;
     document.getElementById('rental-duration-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
@@ -122,7 +122,30 @@ window.projectShow = {
     closeBuyModal,
     openRentModal,
     closeRentModal,
-    closeRentDurationModal
+    closeRentDurationModal,
+    openShareModal: function() {
+        document.body.style.overflow = 'hidden';
+        document.getElementById('share-modal').classList.remove('hidden');
+    },
+    closeShareModal: function() {
+        document.body.style.overflow = '';
+        document.getElementById('share-modal').classList.add('hidden');
+    },
+    copyShareLink: function() {
+        const link = document.getElementById('share-link');
+        navigator.clipboard.writeText(link.value).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 1500);
+        });
+    }
 };
 
 // Expose modal functions globally for inline onclick
