@@ -145,6 +145,28 @@ window.projectShow = {
                 btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
             }, 1500);
         });
+    },
+    openSystemSupportModal: function() {
+        document.body.style.overflow = 'hidden';
+        document.getElementById('system-support-modal').classList.remove('hidden');
+    },
+    closeSystemSupportModal: function() {
+        document.body.style.overflow = '';
+        document.getElementById('system-support-modal').classList.add('hidden');
+    },
+    openWhatsApp: function() {
+        const phoneNumber = '447452792596';
+        const projectName = document.querySelector('h1')?.textContent || 'Project';
+        const projectId = document.querySelector('meta[name="project-id"]')?.content || '';
+        const selectedOption = window.SELECTED_BUY_OPTION || 'general';
+        const optionLabel = selectedOption === 'source' ? 'Source Code' : 'Hosting Package';
+        const message = `Hi, I am interested in the ${optionLabel} option for ${projectName} from Unlimited Plug Sites. Project ID: ${projectId}. Option: ${btoa(selectedOption)}`;
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    },
+    proceedToSupport: function() {
+        window.projectShow.closeBuyModal();
+        window.projectShow.openSystemSupportModal();
     }
 };
 
@@ -939,6 +961,23 @@ window.markAllAsReadNow = function() {
  * Applies animation classes on scroll intersection
  */
 document.addEventListener('DOMContentLoaded', function() {
+    // Buy modal option selection
+    document.querySelectorAll('.buy-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const optionId = this.getAttribute('data-id');
+            document.querySelectorAll('.buy-option').forEach(el => {
+                el.classList.remove('border-blue-500', 'bg-blue-50');
+                el.classList.add('border-gray-200');
+                el.querySelector('.checkbox-icon').innerHTML = '';
+            });
+            this.classList.remove('border-gray-200');
+            this.classList.add('border-blue-500', 'bg-blue-50');
+            this.querySelector('.checkbox-icon').innerHTML = '<svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+            window.SELECTED_BUY_OPTION = optionId;
+            document.getElementById('buy-continue-btn').disabled = false;
+        });
+    });
+    
     // Initialize custom price on credits page
     if (document.getElementById('customAmount')) {
         calculateCustomPrice();

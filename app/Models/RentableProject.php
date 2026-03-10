@@ -19,8 +19,6 @@ class RentableProject extends Model
         'category_id',
         'subcategory_id',
         'api_url',
-        'api_key',
-        'api_secret',
         'pricing_24h',
         'pricing_7d',
         'pricing_30d',

@@ -189,6 +189,7 @@
     @include('modals.buy-modal')
     @include('modals.rent-modal')
     @include('modals.share-modal')
+    @include('modals.system-support-modal')
     
     <script>
         window.projectId = '{{ $project['id'] }}';
@@ -199,4 +200,5 @@
             yearly: {{ $project['pricing_365d'] ?? 2000 }}
         };
     </script>
+    <meta name="project-id" content="{{ $project['id'] }}">
 </x-guest1-layout>

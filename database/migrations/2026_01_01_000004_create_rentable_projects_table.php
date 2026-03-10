@@ -16,8 +16,6 @@ return new class extends Migration
             $table->uuid('category_id')->nullable();
             $table->uuid('subcategory_id')->nullable();
             $table->string('api_url');
-            $table->string('api_key')->nullable()->unique();
-            $table->string('api_secret')->nullable();
             $table->decimal('pricing_24h', 10, 2)->default(0);
             $table->decimal('pricing_7d', 10, 2)->default(0);
             $table->decimal('pricing_30d', 10, 2)->default(0);
@@ -27,7 +25,7 @@ return new class extends Migration
             $table->json('media_images')->nullable();
             $table->boolean('is_buyable')->default(false);
             $table->boolean('is_rentable')->default(false);
-            $table->json('details')->nullable(); // Flexible JSON for features, specs, config, etc.
+            $table->json('details')->nullable();
             $table->string('status')->default('active');
             $table->timestamps();
             $table->softDeletes();
@@ -40,8 +38,6 @@ return new class extends Migration
             $table->index('status');
             $table->index('is_buyable');
             $table->index('is_rentable');
-            $table->index('api_key');
-            $table->index('api_secret');
             $table->index('created_at');
         });
     }
