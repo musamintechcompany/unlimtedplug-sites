@@ -22,8 +22,8 @@ Add the UPS Project Connector credentials to your `.env`:
 
 ```env
 # UPS Project Connector API Credentials
-UPS_PROJECT_CONNECTOR_API_KEY=sk_live_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
-UPS_PROJECT_CONNECTOR_API_SECRET=sk_secret_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
+UPS_PROJECT_CONNECTOR_API_KEY=<your_api_key>
+UPS_PROJECT_CONNECTOR_API_SECRET=<your_api_secret>
 ```
 
 ## Step 2: Create Authentication Middleware

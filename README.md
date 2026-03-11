@@ -22,7 +22,7 @@ Built with Laravel 12 | PHP 8.2+ | MySQL | Redis | Tailwind CSS
 - Email verification on registration
 
 ### Admin Features (Project Owners)
-- Temporary admin panel at `/admin-projects/login` (password: `Osaretine@70`)
+- Temporary admin panel at `/admin-projects/login` (password: contact admin)
 - Complete project management (CRUD)
 - Project image uploads with drag & drop
 - Rich text editor (Quill) for project descriptions
@@ -119,8 +119,8 @@ FLUTTERWAVE_LIVE_SECRET_KEY=<your_live_secret_key>
 FLUTTERWAVE_LIVE_ENCRYPTION_KEY=<your_live_encryption_key>
 
 # UPS Project Connector API Credentials
-UPS_PROJECT_CONNECTOR_API_KEY=sk_live_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
-UPS_PROJECT_CONNECTOR_API_SECRET=sk_secret_51H8vK2Kx9mN4pQ7rS8tU9vW0xY1zA2bC3dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3-X
+UPS_PROJECT_CONNECTOR_API_KEY=<your_api_key>
+UPS_PROJECT_CONNECTOR_API_SECRET=<your_api_secret>
 ```
 
 ### 5. Database Setup
