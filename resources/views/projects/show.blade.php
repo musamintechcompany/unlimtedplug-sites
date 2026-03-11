@@ -1,4 +1,10 @@
-<x-guest1-layout>
+<x-project-layout>
+    @php
+        $seoTitle = $project['name'] . ' - Unlimited Plug Sites';
+        $seoDescription = Str::limit(strip_tags($project['description']), 160);
+        $seoKeywords = $project['category'] . ', ' . $project['subcategory'] . ', rental, project';
+        $seoImage = asset($project['banner_image'] ?? ($project['images'][0] ?? 'images/og-default.jpg'));
+    @endphp
     
     <div class="min-h-screen bg-gray-50 py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -201,4 +207,4 @@
         };
     </script>
     <meta name="project-id" content="{{ $project['id'] }}">
-</x-guest1-layout>
+</x-project-layout>
