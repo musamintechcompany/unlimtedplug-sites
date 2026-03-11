@@ -171,7 +171,7 @@ class RentalController extends Controller
 
             $newExpiry = now()->addSeconds($durationSeconds);
             
-            if ($rental->status === 'on_hold') {
+            if ($rental->status === 'expired') {
                 $this->rentalService->restoreCredentialsOnProject($project, $rental->admin_id);
             }
 
