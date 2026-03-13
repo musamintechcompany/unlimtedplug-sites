@@ -9,9 +9,23 @@
         </p>
     </header>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
+    @if (session('status') === 'email-updated')
+        <div class="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <p class="text-sm text-green-800 dark:text-green-200">
+                <i class="fas fa-check-circle mr-2"></i>
+                Your email address has been successfully updated and verified!
+            </p>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p class="text-sm text-red-800 dark:text-red-200">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                {{ session('error') }}
+            </p>
+        </div>
+    @endif
 
     <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
         @csrf
@@ -54,26 +68,44 @@
 
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800 dark:text-[#EDEDEC]">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 dark:text-[#A1A09A] hover:text-gray-900 dark:hover:text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
+            @if(session('pending_email'))
+                <div class="flex items-center gap-2">
+                    <input 
+                        id="email" 
+                        name="email" 
+                        type="email" 
+                        class="mt-1 block w-full border-[#e3e3e0] dark:border-[#3E3E3A] bg-gray-100 dark:bg-[#1a1a1a] text-[#1b1b18] dark:text-[#EDEDEC] focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" 
+                        value="{{ old('email', $user->email) }}" 
+                        required 
+                        autocomplete="username"
+                        readonly
+                    />
+                    <button 
+                        type="button"
+                        x-data=""
+                        x-on:click.prevent="$dispatch('open-modal', 'verify-email-change')"
+                        class="mt-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md text-sm font-medium whitespace-nowrap"
+                    >
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        Verify
+                    </button>
                 </div>
+                <p class="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                    <i class="fas fa-lock mr-1"></i>
+                    Email verification pending for <strong>{{ session('pending_email') }}</strong>. Click Verify to enter code.
+                </p>
+            @else
+                <x-text-input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    class="mt-1 block w-full" 
+                    :value="old('email', $user->email)" 
+                    required 
+                    autocomplete="username"
+                />
             @endif
+            <x-input-error class="mt-2" :messages="$errors->get('email')" />
         </div>
 
         <div class="flex items-center gap-4">
@@ -89,5 +121,73 @@
                 >{{ __('Saved.') }}</p>
             @endif
         </div>
+    </form>
+
+    <!-- Email Verification Modal -->
+    <x-modal name="verify-email-change" :show="session('status') === 'email-verification-sent' || session('status') === 'verification-code-resent' || $errors->has('code')" focusable>
+        <form method="post" action="{{ route('profile.verify-email-change') }}" class="p-6">
+            @csrf
+
+            <h2 class="text-lg font-medium text-gray-900 dark:text-[#EDEDEC]">
+                <i class="fas fa-shield-alt mr-2 text-yellow-600"></i>
+                {{ __('Verify Your New Email Address') }}
+            </h2>
+
+            <p class="mt-1 text-sm text-gray-600 dark:text-[#A1A09A]">
+                We've sent a 6-digit verification code to <strong class="text-gray-900 dark:text-white">{{ session('pending_email') }}</strong>
+            </p>
+
+            @if (session('status') === 'verification-code-resent')
+                <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p class="text-sm text-green-800 dark:text-green-200">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Verification code has been resent!
+                    </p>
+                </div>
+            @endif
+
+            <div class="mt-6">
+                <x-input-label for="code" value="{{ __('Verification Code') }}" />
+
+                <x-text-input
+                    id="code"
+                    name="code"
+                    type="text"
+                    class="mt-1 block w-full text-center text-2xl tracking-widest"
+                    maxlength="6"
+                    placeholder="000000"
+                    required
+                    autofocus
+                />
+
+                <x-input-error :messages="$errors->get('code')" class="mt-2" />
+            </div>
+
+            <div class="mt-6 flex justify-between items-center">
+                <button 
+                    type="button" 
+                    onclick="event.preventDefault(); document.getElementById('resend-code-form').submit();"
+                    class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                >
+                    <i class="fas fa-redo mr-1"></i>
+                    Resend Code
+                </button>
+
+                <div class="flex gap-3">
+                    <x-secondary-button x-on:click="$dispatch('close')">
+                        {{ __('Cancel') }}
+                    </x-secondary-button>
+
+                    <x-primary-button>
+                        <i class="fas fa-check mr-2"></i>
+                        {{ __('Verify Email') }}
+                    </x-primary-button>
+                </div>
+            </div>
+        </form>
+    </x-modal>
+
+    <form id="resend-code-form" method="post" action="{{ route('profile.resend-code') }}" class="hidden">
+        @csrf
     </form>
 </section>

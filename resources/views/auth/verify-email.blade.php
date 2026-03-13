@@ -33,6 +33,14 @@
                 Didn't receive the code?
                 <a href="{{ route('resend-verification-code') }}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">Resend</a>
             </p>
+            <div class="pt-4 border-t border-[#e5e5e0] dark:border-[#3a3a37]">
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="text-sm text-[#706f6c] dark:text-[#A1A09A] hover:text-indigo-600 dark:hover:text-indigo-400 font-medium">
+                        {{ __('Logout') }}
+                    </button>
+                </form>
+            </div>
         </div>
     </x-auth-card>
 </x-guest-layout>

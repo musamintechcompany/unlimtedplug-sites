@@ -3,7 +3,7 @@
         $seoTitle = $project['name'] . ' - Unlimited Plug Sites';
         $seoDescription = Str::limit(strip_tags($project['description']), 160);
         $seoKeywords = $project['category'] . ', ' . $project['subcategory'] . ', rental, project';
-        $seoImage = asset($project['banner_image'] ?? ($project['images'][0] ?? 'images/og-default.jpg'));
+        $seoImage = asset('storage/' . ($project['banner_image'] ?? ($project['images'][0] ?? 'images/og-default.jpg')));
     @endphp
     
     <div class="min-h-screen bg-gray-50 py-8">
@@ -45,8 +45,8 @@
                         <div class="max-h-96 overflow-y-auto overflow-x-hidden space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                             @if($project['banner_image'])
                                 <div class="w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 ring-2 ring-blue-500" 
-                                     onclick="window.projectShow.changeMainImage('{{ asset($project['banner_image']) }}', this)">
-                                    <img src="{{ asset($project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
+                                     onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $project['banner_image']) }}', this)">
+                                    <img src="{{ asset('storage/' . $project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
                                 </div>
                             @endif
                             @foreach($project['images'] as $index => $image)
@@ -63,7 +63,7 @@
                 <div class="lg:col-span-6">
                     <div class="sticky top-4">
                         <div class="aspect-square bg-white rounded-lg overflow-hidden shadow-sm border" id="main-media-container">
-                            <img id="mainImage" src="{{ asset($project['banner_image'] ?? ($project['images'][0] ?? '')) }}" alt="{{ $project['name'] }}" class="w-full h-full object-cover cursor-pointer" onclick="window.projectShow.openFullscreen()">
+                            <img id="mainImage" src="{{ asset('storage/' . ($project['banner_image'] ?? ($project['images'][0] ?? ''))) }}" alt="{{ $project['name'] }}" class="w-full h-full object-cover cursor-pointer" onclick="window.projectShow.openFullscreen()">
                         </div>
                         
                         <!-- Mobile: Horizontal Thumbnails (Below main image) -->
@@ -72,8 +72,8 @@
                                 <div class="flex gap-2 pb-2" style="min-width: max-content;">
                                     @if($project['banner_image'])
                                         <div class="flex-shrink-0 w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 ring-2 ring-blue-500" 
-                                             onclick="window.projectShow.changeMainImage('{{ asset($project['banner_image']) }}', this)">
-                                            <img src="{{ asset($project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
+                                             onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $project['banner_image']) }}', this)">
+                                            <img src="{{ asset('storage/' . $project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
                                         </div>
                                     @endif
                                     @foreach($project['images'] as $index => $image)

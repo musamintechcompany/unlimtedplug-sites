@@ -34,20 +34,6 @@ Route::get('/privacy', function () {
     return view('privacy');
 })->name('privacy');
 
-// Temporary Admin Panel (delete after admin panel is built)
-Route::prefix('admin-projects')->group(function () {
-    Route::get('/login', [ProjectAdminController::class, 'login'])->name('admin.projects.login');
-    Route::post('/login', [ProjectAdminController::class, 'login']);
-    Route::get('/logout', [ProjectAdminController::class, 'logout'])->name('admin.projects.logout');
-    Route::get('/', [ProjectAdminController::class, 'index'])->name('admin.projects.index');
-    Route::get('/create', [ProjectAdminController::class, 'create'])->name('admin.projects.create');
-    Route::post('/', [ProjectAdminController::class, 'store'])->name('admin.projects.store');
-    Route::get('/{id}', [ProjectAdminController::class, 'show'])->name('admin.projects.show');
-    Route::get('/{id}/edit', [ProjectAdminController::class, 'edit'])->name('admin.projects.edit');
-    Route::patch('/{id}', [ProjectAdminController::class, 'update'])->name('admin.projects.update');
-    Route::delete('/{id}', [ProjectAdminController::class, 'destroy'])->name('admin.projects.destroy');
-    Route::post('/upload-image', [ProjectAdminController::class, 'uploadImage'])->name('admin.projects.upload-image');
-});
 
 Route::get('/product/{id}', function ($id) {
     return view('product-details');
@@ -99,6 +85,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/theme/update', [ProfileController::class, 'updateTheme'])->name('theme.update');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/verify-email-change', [ProfileController::class, 'verifyEmailChange'])->name('profile.verify-email-change');
+    Route::post('/profile/resend-code', [ProfileController::class, 'resendCode'])->name('profile.resend-code');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Credits

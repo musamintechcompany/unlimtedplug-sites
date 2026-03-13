@@ -16,15 +16,6 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
-    Route::get('verify-email', [VerifyEmailController::class, 'show'])
-        ->name('verify-email');
-
-    Route::post('verify-email', [VerifyEmailController::class, 'store'])
-        ->name('verify-email.store');
-
-    Route::get('resend-verification-code', [VerifyEmailController::class, 'resend'])
-        ->name('resend-verification-code');
-
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
@@ -49,6 +40,17 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+// Email verification routes (accessible to both guest and authenticated users)
+Route::get('verify-email', [VerifyEmailController::class, 'show'])
+    ->name('verify-email');
+
+Route::post('verify-email', [VerifyEmailController::class, 'store'])
+    ->name('verify-email.store');
+
+Route::get('resend-verification-code', [VerifyEmailController::class, 'resend'])
+    ->name('resend-verification-code');
+
+// Routes for unverified users (logged in but not verified)
 Route::middleware('auth')->group(function () {
     Route::get('verify-email-prompt', EmailVerificationPromptController::class)
         ->name('verification.notice');

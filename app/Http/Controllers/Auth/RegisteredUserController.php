@@ -45,8 +45,14 @@ class RegisteredUserController extends Controller
             'verification_code_expires_at' => now()->addMinutes(15),
         ]);
 
-        Mail::to($user->email)->send(new VerificationCodeMail($user, $verificationCode));
+        try {
+            Mail::to($user->email)->send(new VerificationCodeMail($user, $verificationCode));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send verification email: ' . $e->getMessage());
+        }
 
-        return redirect(route('verify-email', absolute: false))->with('email', $user->email);
+        session(['verify_email' => $user->email]);
+
+        return redirect(route('verify-email', absolute: false));
     }
 }

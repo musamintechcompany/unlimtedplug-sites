@@ -187,7 +187,7 @@
                     <a href="{{ route('projects.show', $project->id) }}" class="bg-white dark:bg-[#161615] rounded-2xl overflow-hidden border-2 border-blue-400/20 dark:border-blue-500/20 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl transition block">
                         <div class="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center overflow-hidden">
                             @if($project->banner_image)
-                                <img src="{{ asset($project->banner_image) }}" alt="{{ $project->name }}" class="w-full h-full object-cover">
+                                <img src="{{ asset('storage/' . $project->banner_image) }}" alt="{{ $project->name }}" class="w-full h-full object-cover">
                             @else
                                 <svg class="w-20 h-20 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                             @endif

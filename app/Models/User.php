@@ -24,6 +24,7 @@ class User extends Authenticatable
         'theme',
         'profile_photo_path',
         'status',
+        'email_verified_at',
         'email_verification_code',
         'verification_code_expires_at',
         'password_reset_code',
