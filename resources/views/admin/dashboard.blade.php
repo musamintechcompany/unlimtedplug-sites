@@ -4,8 +4,9 @@
         <p class="text-gray-600 dark:text-[#A1A09A] mt-2">Welcome back, {{ auth('admin')->user()->name }}</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <x-widgets.stats.total-users />
+        <x-widgets.stats.online-users />
         <x-widgets.stats.total-projects />
         <x-widgets.stats.total-rentals />
         <x-widgets.stats.total-admins />
