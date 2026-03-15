@@ -37,6 +37,8 @@
                             <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-800">
                                 @if($project->banner_image)
                                     <img src="{{ asset('storage/' . $project->banner_image) }}" alt="{{ $project->name }}" class="w-16 h-16 rounded object-cover">
+                                @elseif(!empty($project->media_images) && count($project->media_images) > 0)
+                                    <img src="{{ asset('storage/' . $project->media_images[0]) }}" alt="{{ $project->name }}" class="w-16 h-16 rounded object-cover">
                                 @else
                                     <div class="w-16 h-16 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                                         <i class="fas fa-image text-gray-500 dark:text-gray-400 text-xl"></i>

@@ -20,6 +20,12 @@ class Wallet extends Model
         'credits_balance' => 'decimal:2',
     ];
 
+    // Accessor for backward compatibility
+    public function getBalanceAttribute()
+    {
+        return $this->credits_balance;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

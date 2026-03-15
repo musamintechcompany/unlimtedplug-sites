@@ -1,11 +1,11 @@
 <x-admin-layout>
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">All Users</h2>
-            <p class="text-gray-600 dark:text-gray-400">Manage user accounts and rentals</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">All Users</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Manage user accounts and rentals</p>
         </div>
-        <a href="{{ route('admin.users.index') }}" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-4 py-2 rounded-lg transition flex items-center gap-2">
-            <i class="fas fa-sync"></i>Refresh
+        <a href="{{ route('admin.users.index') }}" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2 text-sm">
+            <i class="fas fa-sync"></i><span>Refresh</span>
         </a>
     </div>
 

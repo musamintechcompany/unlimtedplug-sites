@@ -1,9 +1,9 @@
 <x-project-layout>
     @php
-        $seoTitle = $project['name'] . ' - Unlimited Plug Sites';
-        $seoDescription = Str::limit(strip_tags($project['description']), 160);
-        $seoKeywords = $project['category'] . ', ' . $project['subcategory'] . ', rental, project';
-        $seoImage = asset('storage/' . ($project['banner_image'] ?? ($project['images'][0] ?? 'images/og-default.jpg')));
+        $seoTitle = $project->name . ' - Unlimited Plug Sites';
+        $seoDescription = Str::limit(strip_tags($project->description), 160);
+        $seoKeywords = ($project->category?->name ?? '') . ', ' . ($project->subcategory?->name ?? '') . ', rental, project';
+        $seoImage = $project->banner_image ? asset('storage/' . $project->banner_image) : asset('images/og-default.jpg');
     @endphp
     
     <div class="min-h-screen bg-gray-50 py-8">
@@ -32,7 +32,7 @@
                             <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
                             </svg>
-                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ $project['name'] }}</span>
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ $project->name }}</span>
                         </div>
                     </li>
                 </ol>
@@ -43,16 +43,16 @@
                 <div class="hidden lg:block lg:col-span-1">
                     <div class="sticky top-4">
                         <div class="max-h-96 overflow-y-auto overflow-x-hidden space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                            @if($project['banner_image'])
+                            @if($project->banner_image)
                                 <div class="w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 ring-2 ring-blue-500" 
-                                     onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $project['banner_image']) }}', this)">
-                                    <img src="{{ asset('storage/' . $project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
+                                     onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $project->banner_image) }}', this)">
+                                    <img src="{{ asset('storage/' . $project->banner_image) }}" alt="Banner" class="w-full h-full object-cover">
                                 </div>
                             @endif
-                            @foreach($project['images'] as $index => $image)
+                            @foreach($project->media_images ?? [] as $index => $image)
                                 <div class="w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500" 
-                                     onclick="window.projectShow.changeMainImage('{{ asset($image) }}', this)">
-                                    <img src="{{ asset($image) }}" alt="{{ $project['name'] }} - Image {{ $index + 1 }}" class="w-full h-full object-cover">
+                                     onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $image) }}', this)">
+                                    <img src="{{ asset('storage/' . $image) }}" alt="{{ $project->name }} - Image {{ $index + 1 }}" class="w-full h-full object-cover">
                                 </div>
                             @endforeach
                         </div>
@@ -63,23 +63,23 @@
                 <div class="lg:col-span-6">
                     <div class="sticky top-4">
                         <div class="aspect-square bg-white rounded-lg overflow-hidden shadow-sm border" id="main-media-container">
-                            <img id="mainImage" src="{{ asset('storage/' . ($project['banner_image'] ?? ($project['images'][0] ?? ''))) }}" alt="{{ $project['name'] }}" class="w-full h-full object-cover cursor-pointer" onclick="window.projectShow.openFullscreen()">
+                            <img id="mainImage" src="{{ asset('storage/' . ($project->banner_image ?? (($project->media_images ?? [])[0] ?? ''))) }}" alt="{{ $project->name }}" class="w-full h-full object-cover cursor-pointer" onclick="window.projectShow.openFullscreen()">
                         </div>
                         
                         <!-- Mobile: Horizontal Thumbnails (Below main image) -->
                         <div class="lg:hidden mt-4">
                             <div class="overflow-x-auto scrollbar-hide">
                                 <div class="flex gap-2 pb-2" style="min-width: max-content;">
-                                    @if($project['banner_image'])
+                                    @if($project->banner_image)
                                         <div class="flex-shrink-0 w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500 ring-2 ring-blue-500" 
-                                             onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $project['banner_image']) }}', this)">
-                                            <img src="{{ asset('storage/' . $project['banner_image']) }}" alt="Banner" class="w-full h-full object-cover">
+                                             onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $project->banner_image) }}', this)">
+                                            <img src="{{ asset('storage/' . $project->banner_image) }}" alt="Banner" class="w-full h-full object-cover">
                                         </div>
                                     @endif
-                                    @foreach($project['images'] as $index => $image)
+                                    @foreach($project->media_images ?? [] as $index => $image)
                                         <div class="flex-shrink-0 w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm border cursor-pointer hover:ring-2 hover:ring-blue-500" 
-                                             onclick="window.projectShow.changeMainImage('{{ asset($image) }}', this)">
-                                            <img src="{{ asset($image) }}" alt="{{ $project['name'] }} - Image {{ $index + 1 }}" class="w-full h-full object-cover">
+                                             onclick="window.projectShow.changeMainImage('{{ asset('storage/' . $image) }}', this)">
+                                            <img src="{{ asset('storage/' . $image) }}" alt="{{ $project->name }} - Image {{ $index + 1 }}" class="w-full h-full object-cover">
                                         </div>
                                     @endforeach
                                 </div>
@@ -92,20 +92,20 @@
                 <div class="lg:col-span-5 space-y-6">
                     <!-- Title -->
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $project['name'] }}</h1>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $project->name }}</h1>
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="space-y-3">
                         <!-- Buy Button -->
-                        @if($project['is_buyable'] ?? false)
+                        @if($project->is_buyable)
                             <button onclick="window.projectShow.openBuyModal()" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                                 Buy Now
                             </button>
                         @endif
                         
                         <!-- Rent Button -->
-                        @if($project['is_rentable'] ?? false)
+                        @if($project->is_rentable)
                             <button onclick="window.projectShow.openRentModal()" class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors">
                                 Rent Now
                             </button>
@@ -128,7 +128,7 @@
                                 </svg>
                             </button>
                             <div id="description-content" class="px-4 pb-4 text-gray-600 leading-relaxed prose-content">
-                                {!! $project['description'] !!}
+                                {!! $project->description !!}
                             </div>
                         </div>
 
@@ -142,16 +142,16 @@
                             </button>
                             <div id="details-content" class="px-4 pb-4">
                                 <dl class="grid grid-cols-1 gap-4">
-                                    @if($project['category'])
+                                    @if($project->category)
                                         <div>
                                             <dt class="text-sm font-medium text-gray-500">Category</dt>
-                                            <dd class="text-sm text-gray-900">{{ $project['category'] }}</dd>
+                                            <dd class="text-sm text-gray-900">{{ $project->category->name }}</dd>
                                         </div>
                                     @endif
-                                    @if($project['subcategory'])
+                                    @if($project->subcategory)
                                         <div>
                                             <dt class="text-sm font-medium text-gray-500">Subcategory</dt>
-                                            <dd class="text-sm text-gray-900">{{ $project['subcategory'] }}</dd>
+                                            <dd class="text-sm text-gray-900">{{ $project->subcategory->name }}</dd>
                                         </div>
                                     @endif
                                     <div>
@@ -198,13 +198,13 @@
     @include('modals.system-support-modal')
     
     <script>
-        window.projectId = '{{ $project['id'] }}';
+        window.projectId = '{{ $project->id }}';
         window.projectPricing = {
-            daily: {{ $project['pricing_24h'] ?? 10 }},
-            weekly: {{ $project['pricing_7d'] ?? 60 }},
-            monthly: {{ $project['pricing_30d'] ?? 200 }},
-            yearly: {{ $project['pricing_365d'] ?? 2000 }}
+            daily: {{ $project->pricing_24h ?? 10 }},
+            weekly: {{ $project->pricing_7d ?? 60 }},
+            monthly: {{ $project->pricing_30d ?? 200 }},
+            yearly: {{ $project->pricing_365d ?? 2000 }}
         };
     </script>
-    <meta name="project-id" content="{{ $project['id'] }}">
+    <meta name="project-id" content="{{ $project->id }}">
 </x-project-layout>

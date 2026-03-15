@@ -100,6 +100,7 @@ class PaymentController extends Controller
 
             // Create notification with base and total credits
             NotificationService::paymentSuccess($user, $baseCredits, $price, $currency, $credits);
+            NotificationService::adminPaymentReceived($user, $credits, $price, $currency);
 
             return response()->json([
                 'success' => true,

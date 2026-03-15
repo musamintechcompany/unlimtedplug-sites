@@ -56,8 +56,35 @@
                 <a href="{{ route('admin.notifications.mark-read', $notification->id) }}" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30">
-                                <i class="fas fa-bell text-xl text-blue-600 dark:text-blue-400"></i>
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center
+                                @switch($notification->type)
+                                    @case('admin_new_user') bg-green-100 dark:bg-green-900/30 @break
+                                    @case('admin_new_rental') bg-blue-100 dark:bg-blue-900/30 @break
+                                    @case('admin_rental_renewed') bg-purple-100 dark:bg-purple-900/30 @break
+                                    @case('admin_payment_received') bg-yellow-100 dark:bg-yellow-900/30 @break
+                                    @case('admin_rental_expired') bg-red-100 dark:bg-red-900/30 @break
+                                    @default bg-blue-100 dark:bg-blue-900/30
+                                @endswitch
+                            ">
+                                @switch($notification->type)
+                                    @case('admin_new_user')
+                                        <i class="fas fa-user-plus text-xl text-green-600 dark:text-green-400"></i>
+                                        @break
+                                    @case('admin_new_rental')
+                                        <i class="fas fa-handshake text-xl text-blue-600 dark:text-blue-400"></i>
+                                        @break
+                                    @case('admin_rental_renewed')
+                                        <i class="fas fa-sync-alt text-xl text-purple-600 dark:text-purple-400"></i>
+                                        @break
+                                    @case('admin_payment_received')
+                                        <i class="fas fa-coins text-xl text-yellow-600 dark:text-yellow-400"></i>
+                                        @break
+                                    @case('admin_rental_expired')
+                                        <i class="fas fa-clock text-xl text-red-600 dark:text-red-400"></i>
+                                        @break
+                                    @default
+                                        <i class="fas fa-bell text-xl text-blue-600 dark:text-blue-400"></i>
+                                @endswitch
                             </div>
                         </div>
                         <div class="flex-1 min-w-0">

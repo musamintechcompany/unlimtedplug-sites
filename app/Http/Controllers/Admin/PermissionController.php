@@ -39,6 +39,12 @@ class PermissionController extends Controller
             'guard_name' => 'admin'
         ]);
 
+        // Auto-assign to superadmin role if it exists
+        $superadminRole = \App\Models\Role::where('name', 'superadmin')->where('guard_name', 'admin')->first();
+        if ($superadminRole) {
+            $superadminRole->givePermissionTo($permission);
+        }
+
         // Check if "Create & Add New" button was clicked
         if ($request->input('action') === 'create_new') {
             return redirect()->route('admin.permissions.create')

@@ -112,6 +112,7 @@ class RentalService
 
             \Log::info('Rental created successfully', ['rental_id' => $rental->id, 'user_id' => $user->id]);
             \App\Services\NotificationService::rentalCreated($user, $project->name, $creditsCost, $durationValue, $durationType, $rental->id);
+            \App\Services\NotificationService::adminNewRental($user, $project->name, $creditsCost, $durationValue, $durationType);
 
             return $rental;
         } catch (\Exception $e) {
@@ -239,6 +240,7 @@ class RentalService
             $rental->update(['status' => 'expired']);
             \Log::info('Rental suspended', ['rental_id' => $rental->id]);
             \App\Services\NotificationService::rentalSuspended($rental->user, $project->name, $rental->id);
+            \App\Services\NotificationService::adminRentalExpired($rental->user, $project->name);
             $count++;
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Admin;
 use App\Models\Notification;
 use Illuminate\Database\Eloquent\Model;
 
@@ -108,6 +109,99 @@ class NotificationService
             'Rental Suspended',
             "Your rental for '{$projectName}' has been suspended due to expiry",
             ['project_name' => $projectName]
+        );
+    }
+
+    // ── Admin Notifications ──
+
+    private static function notifyAdmins(string $type, string $title, string $message, array $data = [], ?string $permission = null): void
+    {
+        try {
+            $query = Admin::where('status', 'active');
+            $admins = $query->get();
+
+            foreach ($admins as $admin) {
+                if ($permission && !$admin->hasPermissionTo($permission, 'admin')) {
+                    continue;
+                }
+                self::create($admin, $type, $title, $message, $data);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to notify admins: ' . $e->getMessage());
+        }
+    }
+
+    public static function adminNewUser(Model $user): void
+    {
+        self::notifyAdmins(
+            'admin_new_user',
+            'New User Registered',
+            "{$user->name} ({$user->email}) has registered on the platform.",
+            ['user_id' => $user->id, 'user_name' => $user->name, 'user_email' => $user->email],
+            'view-users'
+        );
+    }
+
+    public static function adminNewRental(Model $user, string $projectName, int $credits, int $durationValue, string $durationType): void
+    {
+        $durationLabel = match($durationType) {
+            'daily' => 'Day(s)',
+            'weekly' => 'Week(s)',
+            'monthly' => 'Month(s)',
+            'yearly' => 'Year(s)',
+            default => $durationType
+        };
+
+        self::notifyAdmins(
+            'admin_new_rental',
+            'New Rental',
+            "{$user->name} rented '{$projectName}' for {$durationValue} {$durationLabel} ({$credits} credits).",
+            ['user_id' => $user->id, 'user_name' => $user->name, 'project_name' => $projectName, 'credits' => $credits, 'duration_value' => $durationValue, 'duration_type' => $durationType],
+            'view-rentals'
+        );
+    }
+
+    public static function adminRentalRenewed(Model $user, string $projectName, int $credits, int $quantity, string $durationType): void
+    {
+        $durationLabel = match($durationType) {
+            'daily' => 'Day(s)',
+            'weekly' => 'Week(s)',
+            'monthly' => 'Month(s)',
+            'yearly' => 'Year(s)',
+            default => $durationType
+        };
+
+        self::notifyAdmins(
+            'admin_rental_renewed',
+            'Rental Renewed',
+            "{$user->name} renewed '{$projectName}' for {$quantity} {$durationLabel} ({$credits} credits).",
+            ['user_id' => $user->id, 'user_name' => $user->name, 'project_name' => $projectName, 'credits' => $credits, 'quantity' => $quantity, 'duration_type' => $durationType],
+            'view-rentals'
+        );
+    }
+
+    public static function adminPaymentReceived(Model $user, int $credits, float $price, string $currency): void
+    {
+        $currencyInfo = config('payment.currencies')[$currency] ?? ['symbol' => '$'];
+        $symbol = $currencyInfo['symbol'];
+
+        self::notifyAdmins(
+            'admin_payment_received',
+            'Payment Received',
+            "{$user->name} purchased {$credits} credits for {$symbol}{$price} {$currency}.",
+            ['user_id' => $user->id, 'user_name' => $user->name, 'credits' => $credits, 'price' => $price, 'currency' => $currency],
+            'view-transactions'
+        );
+    }
+
+    public static function adminRentalExpired(Model $user, string $projectName): void
+    {
+        self::notifyAdmins(
+            'admin_rental_expired',
+            'Rental Expired',
+            "{$user->name}'s rental for '{$projectName}' has expired and been suspended.",
+            ['user_id' => $user->id, 'user_name' => $user->name, 'project_name' => $projectName],
+            'view-rentals'
         );
     }
 }

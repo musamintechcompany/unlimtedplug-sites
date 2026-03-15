@@ -4,7 +4,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AutoLoginController;
 use App\Http\Controllers\CreditController;
 use App\Http\Controllers\CurrencyController;
-use App\Http\Controllers\ProjectAdminController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\PaymentController;
@@ -34,32 +33,13 @@ Route::get('/privacy', function () {
     return view('privacy');
 })->name('privacy');
 
-
-Route::get('/product/{id}', function ($id) {
-    return view('product-details');
-})->name('product.details');
-
 Route::get('/projects/{id}', function ($id) {
-    $project = \App\Models\RentableProject::where('id', $id)->where('status', 'active')->firstOrFail();
-    $images = $project->media_images ?? [];
+    $project = \App\Models\RentableProject::with(['category', 'subcategory'])
+        ->where('id', $id)
+        ->where('status', 'active')
+        ->firstOrFail();
     
-    return view('projects.show', [
-        'project' => [
-            'id' => $project->id,
-            'name' => $project->name,
-            'category' => $project->category?->name,
-            'subcategory' => $project->subcategory?->name,
-            'description' => $project->description,
-            'is_buyable' => $project->is_buyable,
-            'is_rentable' => $project->is_rentable,
-            'pricing_24h' => $project->pricing_24h,
-            'pricing_7d' => $project->pricing_7d,
-            'pricing_30d' => $project->pricing_30d,
-            'pricing_365d' => $project->pricing_365d,
-            'banner_image' => $project->banner_image,
-            'images' => $images,
-        ]
-    ]);
+    return view('projects.show', compact('project'));
 })->name('projects.show');
 
 // Auto-login from Marketplace

@@ -201,6 +201,7 @@ class RentalController extends Controller
             ]);
 
             \App\Services\NotificationService::rentalRenewed(auth()->user(), $project->name, $totalCost, $validated['quantity'], $validated['duration_type'], $rental->id);
+            \App\Services\NotificationService::adminRentalRenewed(auth()->user(), $project->name, $totalCost, $validated['quantity'], $validated['duration_type']);
 
             DB::commit();
 

@@ -64,6 +64,8 @@ class User extends Authenticatable
                 "Welcome to {$appName}!",
                 'Welcome to our platform! Start by exploring projects or purchasing credits to get started.'
             );
+
+            NotificationService::adminNewUser($user);
         });
     }
 
